@@ -202,12 +202,11 @@ void tarea_medir_fuerza( void* taskParmPtr )
 		TickType_t xLastWakeTime = xTaskGetTickCount();
 		TickType_t dif = *( (TickType_t*)  taskParmPtr );
 
+		// Inicialización de parámetros
+		unsigned char i;
+
 		//gpioWrite(DataPin,1);
 		gpioWrite(ClockPin,0);
-
-		gpioWrite( LEDB , 1 );
-		vTaskDelay( dif );
-		gpioWrite( LEDB , 0 );
 
 		// Crear tarea de espera
 			BaseType_t res =
@@ -228,10 +227,6 @@ void tarea_medir_fuerza( void* taskParmPtr )
 	    // ---------- REPETIR POR SIEMPRE --------------------------
 		while ( 1 ){
 
-			gpioWrite( LED2 , 1 );
-			vTaskDelay( dif );
-			gpioWrite( LED2 , 0 );
-
 			// Esperar a que el módulo HX711 esté listo
 			if (xSemaphoreTake( sem_medir_fuerza  ,  portMAX_DELAY )){
 
@@ -239,9 +234,28 @@ void tarea_medir_fuerza( void* taskParmPtr )
 				vTaskDelay( dif );
 				gpioWrite( LEDG , 0 );
 
-				fuerza = 10;
+				// Medir 24 pulsos
+				for (i=0;i<24;i++)
+					{
+						gpioWrite(ClockPin,1);
+						Count=Count<<1;
+						gpioWrite(ClockPin,0);
+						if(gpioRead(DataPin)){
 
-				xQueueSend(cola_datos_calculados , &fuerza,  portMAX_DELAY);
+							//gpioWrite( LEDG , 1 );
+							//vTaskDelay(40 / portTICK_RATE_MS);
+							//gpioWrite( LEDG , 0 );
+							Count++;
+						}
+					}
+				// Hacer medición final
+				gpioWrite(ClockPin,1);
+				Count=Count^0x800000;
+				gpioWrite(ClockPin,0);
+
+				//fuerza = 10;
+
+				xQueueSend(cola_datos_calculados , &Count,  portMAX_DELAY);
 
 				vTaskDelete(NULL);
 			}
