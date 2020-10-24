@@ -13,7 +13,7 @@
 
 /*==================[internal data declaration]==============================*/
 
-volatile unsigned long OFFSET = 0;
+volatile unsigned long OFFSSET = 0;
 int Times = 5;
 
 /*==================[internal functions declaration]=========================*/
@@ -39,15 +39,16 @@ double HX711GetForce(int times);
 void HX711Config(void)
 {
 	// Se setea el Clock en GPIO7 y el Data en GPIO8
-	gpioConfig(ClockPin,GPIO_INPUT);
-	gpioConfig(DataPin,GPIO_OUTPUT);
+	gpioConfig(ClockPin,GPIO_OUTPUT);
+	gpioConfig(DataPin,GPIO_INPUT);
+	//gpioWrite(DataPin,1);
 	//HX711Tare(Times);
 
 }
 
 void HX711Tare(int times) {
 	double sum = HX711GetAverage(times);
-	OFFSET = sum;
+	OFFSSET = sum;
 }
 
 void HX711WaitReady(void) {
@@ -98,6 +99,6 @@ unsigned long HX711GetAverage(int times) {
 
 double HX711GetForce(int times) {
 
-	double aux = HX711GetAverage(times) - OFFSET;
+	double aux = HX711GetAverage(times) - OFFSSET;
 	return aux / SCALE;
 }
