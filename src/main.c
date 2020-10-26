@@ -44,11 +44,11 @@
 
 #define DataPin GPIO8
 #define ClockPin GPIO7
-#define SCALE		17000
+#define SCALE		17110
 
 /*==================[definiciones de datos internos]=========================*/
 
-int cant_promediada = 5;
+int cant_promediada = 15;
 unsigned long Count = 0;
 volatile unsigned long OFFSET = 0;
 bool tarado = false;
@@ -191,29 +191,35 @@ void tarea_Rx_WIFI( void* taskParmPtr )
 // Implementacion de funcion de la tarea
 void tarea_Tx_WIFI( void* taskParmPtr )
 {
-	unsigned long f = 0;
+	unsigned long fu = 0;
 	double p = 0;
+	char str_aux[50] = {};
     // ---------- CONFIGURACIONES ------------------------------
 	TickType_t xPeriodicity =  1000 / portTICK_RATE_MS;		// Tarea periodica cada 1000 ms
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 	// ---------- REPETIR POR SIEMPRE --------------------------
     while( 1 )
     {
-    	if(xQueueReceive(cola_fuerza , &f,  portMAX_DELAY)){			// Esperamos tecla
+    	if(xQueueReceive(cola_fuerza , &fu,  portMAX_DELAY)){			// Esperamos tecla
 
 			gpioWrite( LED1, ON );
 			vTaskDelay(40 / portTICK_RATE_MS);
 			gpioWrite( LED1, OFF );
 
-			p = (f - OFFSET) / SCALE;
+			p = (fu - OFFSET) / SCALE;
 
 			if (p < 0){
 				debugPrintString("Negativo corregido");
 				p = 0;
 			}
+
+			debugPrintlnUInt(OFFSET);
 			debugPrintString( "Fuerza: " );
-			debugPrintlnUInt(f);
+			debugPrintlnUInt(fu);
+			sprintf(str_aux, "%d",p);
 			debugPrintString( "Peso: " );
+			debugPrintString( str_aux );
+			debugPrintEnter();
 			debugPrintlnInt(p);
 
 			// Delay periódico
