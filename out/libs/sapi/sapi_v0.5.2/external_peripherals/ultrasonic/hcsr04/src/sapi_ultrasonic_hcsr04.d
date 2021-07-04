@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/sapi/sapi_v0.5.2/external_peripherals/ultrasonic/hcsr04/src/sapi_ultrasonic_hcsr04.o: \
+TPs/TP_prueba2/out/libs/sapi/sapi_v0.5.2/external_peripherals/ultrasonic/hcsr04/src/sapi_ultrasonic_hcsr04.o: \
  libs/sapi/sapi_v0.5.2/external_peripherals/ultrasonic/hcsr04/src/sapi_ultrasonic_hcsr04.c \
  libs/sapi/sapi_v0.5.2/external_peripherals/ultrasonic/hcsr04/inc/sapi_ultrasonic_hcsr04.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi_datatypes.h \

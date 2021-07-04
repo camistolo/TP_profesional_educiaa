@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/sapi/sapi_v0.5.2/soc/peripherals/src/sapi_tick.o: \
+TPs/TP_prueba2/out/libs/sapi/sapi_v0.5.2/soc/peripherals/src/sapi_tick.o: \
  libs/sapi/sapi_v0.5.2/soc/peripherals/src/sapi_tick.c \
  libs/sapi/sapi_v0.5.2/soc/peripherals/inc/sapi_tick.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi_datatypes.h \
@@ -69,7 +69,7 @@ TPs/TPFinal/out/libs/sapi/sapi_v0.5.2/soc/peripherals/src/sapi_tick.o: \
  libs/sapi/sapi_v0.5.2/soc/peripherals/inc/sapi_uart.h \
  libs/sapi/sapi_v0.5.2/abstract_modules/inc/sapi_delay.h \
  libs/sapi/sapi_v0.5.2/board/inc/sapi_peripheral_map.h \
- libs/freertos/include/FreeRTOS.h TPs/TPFinal/inc/FreeRTOSConfig.h \
+ libs/freertos/include/FreeRTOS.h TPs/TP_prueba2/inc/FreeRTOSConfig.h \
  libs/freertos/include/private/projdefs.h \
  libs/freertos/include/private/portable.h \
  libs/freertos/include/private/deprecated_definitions.h \

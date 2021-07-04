@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/sapi/sapi_v0.5.2/external_peripherals/display/led_segments/7segment/src/sapi_7_segment_display.o: \
+TPs/TP_prueba2/out/libs/sapi/sapi_v0.5.2/external_peripherals/display/led_segments/7segment/src/sapi_7_segment_display.o: \
  libs/sapi/sapi_v0.5.2/external_peripherals/display/led_segments/7segment/src/sapi_7_segment_display.c \
  libs/sapi/sapi_v0.5.2/external_peripherals/display/led_segments/7segment/inc/sapi_7_segment_display.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi_datatypes.h \

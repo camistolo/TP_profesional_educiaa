@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/lpc_open/lpc_startup/src/sysinit.o: \
+TPs/TP_prueba2/out/libs/lpc_open/lpc_startup/src/sysinit.o: \
  libs/lpc_open/lpc_startup/src/sysinit.c \
  libs/lpc_open/boards/edu_ciaa_nxp/inc/board.h \
  libs/lpc_open/lpc_chip_43xx/inc/chip.h \

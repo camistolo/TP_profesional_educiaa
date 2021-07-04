@@ -1,6 +1,7 @@
-TPs/TPFinal/out/libs/freertos/source/stream_buffer.o: \
+TPs/TP_prueba2/out/libs/freertos/source/stream_buffer.o: \
  libs/freertos/source/stream_buffer.c libs/freertos/include/FreeRTOS.h \
- TPs/TPFinal/inc/FreeRTOSConfig.h libs/lpc_open/lpc_chip_43xx/inc/chip.h \
+ TPs/TP_prueba2/inc/FreeRTOSConfig.h \
+ libs/lpc_open/lpc_chip_43xx/inc/chip.h \
  libs/lpc_open/lpc_chip_43xx/inc/sys_config.h \
  libs/lpc_open/lpc_chip_43xx/inc/cmsis.h \
  libs/lpc_open/lpc_chip_43xx/inc/lpc_types.h \

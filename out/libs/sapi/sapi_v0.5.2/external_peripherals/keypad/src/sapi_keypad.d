@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/sapi/sapi_v0.5.2/external_peripherals/keypad/src/sapi_keypad.o: \
+TPs/TP_prueba2/out/libs/sapi/sapi_v0.5.2/external_peripherals/keypad/src/sapi_keypad.o: \
  libs/sapi/sapi_v0.5.2/external_peripherals/keypad/src/sapi_keypad.c \
  libs/sapi/sapi_v0.5.2/external_peripherals/keypad/inc/sapi_keypad.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi_datatypes.h \

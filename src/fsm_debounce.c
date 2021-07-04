@@ -34,6 +34,7 @@
 #include "FreeRTOSConfig.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "auxs.h"
 
 typedef enum
 {
@@ -49,18 +50,22 @@ void fsmButtonUpdate( gpioMap_t tecla );
 void buttonPressed( void );
 void buttonReleased( void );
 
+void task_jump( void* taskParmPtr );
+
 fsmButtonState_t fsmButtonState;
 
 TickType_t tiempo_down;
 TickType_t tiempo_up;
 TickType_t tiempo_diff;
 
+extern int new_measurement;
+int stage = 0;
+
 /* prototipo de la tarea led   */
-void tarea_medir( void* taskParmPtr );
+//void task_measurement( void* taskParmPtr );
 
 // Handles de las tareas
-TaskHandle_t TaskHandle_medir;
-//TaskHandle_t TaskHandle_medicion;
+TaskHandle_t TaskHandle_measurement;
 
 TickType_t get_diff()
 {
@@ -85,20 +90,30 @@ void buttonReleased( void )
 	tiempo_up = xTaskGetTickCount();
 	tiempo_diff = tiempo_up - tiempo_down;
 
-	// Crear tarea en freeRTOS
+/*	// Crear tarea en freeRTOS
 	BaseType_t res =
 	xTaskCreate(
-		tarea_medir,                     	// Funcion de la tarea a ejecutar
-		( const char * )"tarea_medir",   	// Nombre de la tarea como String amigable para el usuario
+		task_measurement,                     	// Funcion de la tarea a ejecutar
+		( const char * )"task_measurement",   	// Nombre de la tarea como String amigable para el usuario
 		configMINIMAL_STACK_SIZE*2, 	// Cantidad de stack de la tarea
 		&tiempo_diff,                	// Parametros de tarea
 		tskIDLE_PRIORITY+2,         	// Prioridad de la tarea
-		&TaskHandle_medir                          	// Puntero a la tarea creada en el sistema
+		&TaskHandle_measurement                         	// Puntero a la tarea creada en el sistema
 	);
 
 	if(res == pdFAIL)
 	{
-		//error
+		gpioWrite( LED_ERROR , ON );
+		printf( MSG_ERROR_TASK );
+		while(TRUE);
+	}*/
+
+	new_measurement = 0;
+	if (stage == 0){
+		vTaskResume(TaskHandle_measurement);
+	}
+	else{
+		create_task(task_jump,"task_jump",SIZE,0,PRIORITY+1,NULL);
 	}
 
 }

@@ -1,5 +1,6 @@
-TPs/TPFinal/out/TPs/TPFinal/src/HX711.o: TPs/TPFinal/src/HX711.c \
- libs/freertos/include/FreeRTOS.h TPs/TPFinal/inc/FreeRTOSConfig.h \
+TPs/TP_prueba2/out/TPs/TP_prueba2/src/auxs.o: TPs/TP_prueba2/src/auxs.c \
+ TPs/TP_prueba2/inc/auxs.h libs/freertos/include/FreeRTOS.h \
+ TPs/TP_prueba2/inc/FreeRTOSConfig.h \
  libs/lpc_open/lpc_chip_43xx/inc/chip.h \
  libs/lpc_open/lpc_chip_43xx/inc/sys_config.h \
  libs/lpc_open/lpc_chip_43xx/inc/cmsis.h \
@@ -126,4 +127,8 @@ TPs/TPFinal/out/TPs/TPFinal/src/HX711.o: TPs/TPFinal/src/HX711.c \
  libs/sapi/sapi_v0.5.2/external_peripherals/imu/mpu9250/inc/sapi_imu_mpu9250.h \
  libs/sapi/sapi_v0.5.2/external_peripherals/imu/mpu60X0/inc/sapi_imu_mpu60X0.h \
  libs/sapi/sapi_v0.5.2/external_peripherals/memory/eeprom/inc/sapi_eeprom24xx1025.h \
- libs/sapi/sapi_v0.5.2/external_peripherals/ultrasonic/hcsr04/inc/sapi_ultrasonic_hcsr04.h
+ libs/sapi/sapi_v0.5.2/external_peripherals/ultrasonic/hcsr04/inc/sapi_ultrasonic_hcsr04.h \
+ libs/freertos/include/semphr.h libs/freertos/include/queue.h \
+ TPs/TP_prueba2/inc/tasks_force.h TPs/TP_prueba2/inc/FreeRTOSConfig.h \
+ TPs/TP_prueba2/inc/auxs.h TPs/TP_prueba2/inc/tasks_wifi.h \
+ TPs/TP_prueba2/inc/protocol.h

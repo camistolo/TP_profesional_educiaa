@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/plc//src/PLC_Hardware.o: \
+TPs/TP_prueba2/out/libs/plc//src/PLC_Hardware.o: \
  libs/plc//src/PLC_Hardware.c libs/plc//inc/PLC_StandardCDataTypes.h \
  libs/plc//inc/PLC_Hardware.h libs/sapi/sapi_v0.5.2/base/inc/sapi.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi_datatypes.h \

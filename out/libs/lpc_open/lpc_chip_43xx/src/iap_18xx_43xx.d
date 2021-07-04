@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/lpc_open/lpc_chip_43xx/src/iap_18xx_43xx.o: \
+TPs/TP_prueba2/out/libs/lpc_open/lpc_chip_43xx/src/iap_18xx_43xx.o: \
  libs/lpc_open/lpc_chip_43xx/src/iap_18xx_43xx.c \
  libs/lpc_open/lpc_chip_43xx/inc/chip.h \
  libs/lpc_open/lpc_chip_43xx/inc/sys_config.h \

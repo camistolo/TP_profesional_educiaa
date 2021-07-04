@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/sapi/sapi_v0.5.2/external_peripherals/imu/mpu9250/src/sapi_imu_mpu9250.o: \
+TPs/TP_prueba2/out/libs/sapi/sapi_v0.5.2/external_peripherals/imu/mpu9250/src/sapi_imu_mpu9250.o: \
  libs/sapi/sapi_v0.5.2/external_peripherals/imu/mpu9250/src/sapi_imu_mpu9250.c \
  libs/sapi/sapi_v0.5.2/external_peripherals/imu/mpu9250/inc/sapi_imu_mpu9250.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi_datatypes.h \

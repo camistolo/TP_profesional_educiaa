@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/sapi/sapi_v0.5.2/soc/core/src/sapi_sleep.o: \
+TPs/TP_prueba2/out/libs/sapi/sapi_v0.5.2/soc/core/src/sapi_sleep.o: \
  libs/sapi/sapi_v0.5.2/soc/core/src/sapi_sleep.c \
  libs/sapi/sapi_v0.5.2/soc/core/inc/sapi_sleep.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi_datatypes.h \

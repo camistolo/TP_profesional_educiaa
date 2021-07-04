@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/seos_pont_2014//src/seos_pont_2014_scheduler.o: \
+TPs/TP_prueba2/out/libs/seos_pont_2014//src/seos_pont_2014_scheduler.o: \
  libs/seos_pont_2014//src/seos_pont_2014_scheduler.c \
  libs/seos_pont_2014//inc/seos_pont_2014_scheduler.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi.h \

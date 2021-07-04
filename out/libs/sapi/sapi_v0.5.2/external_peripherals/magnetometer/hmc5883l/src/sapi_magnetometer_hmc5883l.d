@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/sapi/sapi_v0.5.2/external_peripherals/magnetometer/hmc5883l/src/sapi_magnetometer_hmc5883l.o: \
+TPs/TP_prueba2/out/libs/sapi/sapi_v0.5.2/external_peripherals/magnetometer/hmc5883l/src/sapi_magnetometer_hmc5883l.o: \
  libs/sapi/sapi_v0.5.2/external_peripherals/magnetometer/hmc5883l/src/sapi_magnetometer_hmc5883l.c \
  libs/sapi/sapi_v0.5.2/external_peripherals/magnetometer/hmc5883l/inc/sapi_magnetometer_hmc5883l.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi_datatypes.h \

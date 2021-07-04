@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/freertos/source/portable/ARM_CM/conio.o: \
+TPs/TP_prueba2/out/libs/freertos/source/portable/ARM_CM/conio.o: \
  libs/freertos/source/portable/ARM_CM/conio.c \
  libs/freertos/source/portable/ARM_CM/conio.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi.h \

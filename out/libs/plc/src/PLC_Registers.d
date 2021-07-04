@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/plc//src/PLC_Registers.o: \
+TPs/TP_prueba2/out/libs/plc//src/PLC_Registers.o: \
  libs/plc//src/PLC_Registers.c libs/plc//inc/PLC_Registers.h \
  libs/plc//inc/PLC_1KByteStructures.h \
  libs/plc//inc/PLC_ElementaryDataTypes.h libs/plc//inc/PLC_Services.h \

@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/sapi/sapi_v0.5.2/external_peripherals/memory/eeprom/src/sapi_eeprom24xx1025.o: \
+TPs/TP_prueba2/out/libs/sapi/sapi_v0.5.2/external_peripherals/memory/eeprom/src/sapi_eeprom24xx1025.o: \
  libs/sapi/sapi_v0.5.2/external_peripherals/memory/eeprom/src/sapi_eeprom24xx1025.c \
  libs/sapi/sapi_v0.5.2/external_peripherals/memory/eeprom/inc/sapi_eeprom24xx1025.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi.h \

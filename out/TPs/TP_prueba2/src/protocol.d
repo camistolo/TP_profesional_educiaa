@@ -1,5 +1,6 @@
-TPs/TPFinal/out/TPs/TPFinal/src/main.o: TPs/TPFinal/src/main.c \
- libs/freertos/include/FreeRTOS.h TPs/TPFinal/inc/FreeRTOSConfig.h \
+TPs/TP_prueba2/out/TPs/TP_prueba2/src/protocol.o: \
+ TPs/TP_prueba2/src/protocol.c libs/freertos/include/FreeRTOS.h \
+ TPs/TP_prueba2/inc/FreeRTOSConfig.h \
  libs/lpc_open/lpc_chip_43xx/inc/chip.h \
  libs/lpc_open/lpc_chip_43xx/inc/sys_config.h \
  libs/lpc_open/lpc_chip_43xx/inc/cmsis.h \
@@ -65,9 +66,7 @@ TPs/TPFinal/out/TPs/TPFinal/src/main.o: TPs/TPFinal/src/main.c \
  libs/freertos/include/private/deprecated_definitions.h \
  libs/freertos/source/portable/ARM_CM4F/portmacro.h \
  libs/freertos/include/private/mpu_wrappers.h \
- libs/freertos/include/task.h libs/freertos/include/private/list.h \
- libs/freertos/include/semphr.h libs/freertos/include/queue.h \
- libs/sapi/sapi_v0.5.2/base/inc/sapi.h \
+ TPs/TP_prueba2/inc/protocol.h libs/sapi/sapi_v0.5.2/base/inc/sapi.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi_datatypes.h \
  libs/lpc_open/boards/edu_ciaa_nxp/inc/board.h \
  libs/lpc_open/boards/inc/board_api.h \
@@ -127,4 +126,5 @@ TPs/TPFinal/out/TPs/TPFinal/src/main.o: TPs/TPFinal/src/main.c \
  libs/sapi/sapi_v0.5.2/external_peripherals/imu/mpu9250/inc/sapi_imu_mpu9250.h \
  libs/sapi/sapi_v0.5.2/external_peripherals/imu/mpu60X0/inc/sapi_imu_mpu60X0.h \
  libs/sapi/sapi_v0.5.2/external_peripherals/memory/eeprom/inc/sapi_eeprom24xx1025.h \
- libs/sapi/sapi_v0.5.2/external_peripherals/ultrasonic/hcsr04/inc/sapi_ultrasonic_hcsr04.h
+ libs/sapi/sapi_v0.5.2/external_peripherals/ultrasonic/hcsr04/inc/sapi_ultrasonic_hcsr04.h \
+ libs/freertos/include/semphr.h libs/freertos/include/queue.h

@@ -1,4 +1,4 @@
-TPs/TPFinal/out/libs/sapi/sapi_v0.5.2/external_peripherals/temperature_humudity/dht11/src/sapi_dht11.o: \
+TPs/TP_prueba2/out/libs/sapi/sapi_v0.5.2/external_peripherals/temperature_humudity/dht11/src/sapi_dht11.o: \
  libs/sapi/sapi_v0.5.2/external_peripherals/temperature_humudity/dht11/src/sapi_dht11.c \
  libs/sapi/sapi_v0.5.2/external_peripherals/temperature_humudity/dht11/inc/sapi_dht11.h \
  libs/sapi/sapi_v0.5.2/base/inc/sapi_datatypes.h \
