@@ -1,33 +1,29 @@
-***************14/10/20***************
+# Diseño actual
+ Pasos que se llevan a cabo actualmente
 
-En principio se tiene la tarea que recibe de wifi y crea la de medicion, que a su vez crea la de espera (estas ultimas dos con prioridad 2). La de medicion funciona una vez y dsps nunca mas, solo funciona la de espera. Voy a probar ponerle a la de medicion una prioridad mas alta.
+1. Se crea la tarea de tara **task_tare**
+    1. La tarea de tara crea las tareas **task_wait**, **task_average** y **task_measurement**.
+    2. La tarea de medición espera a que **task_wait** le diga a través de un semáforo que ya puede medirse.
+    3. Se intercala entre las tareas de medición y promedio (mediante una cola y un semáforo) para obtener un resultado preciso.
+    4. Se devuelve el valor promedio final a la tarea de tara mediante una cola, se habilita la interrupción de wifi y s eleimina la tarea de tara.
+2. La interrupción de wifi espera a recibir algún valor por wifi.
+    1. Si recibe que se mida el peso, se crea la tarea **task_weight**, y si recibe que se mida el salto, se crea la tarea **task_jump**.
+3. Ambas tareas (de peso y de salto) calculan lo correspondiente y luego, vuelven a llamar a la función **protocol_x_init** que habilita la interrupción de wifi. 
 
-Le puse prioridad 3 a la tarea de medicion y sigue solo funcionando la de esperar medicion. Eso no me molesta, pero igualmente nunca entra a estar listo para medir. Ese es el problema.
+# Cosas a modificar
+- Crear todas las tareas en el main, de forma tal de asegurar que todas las tareas son creadas correctamente al principio [TO DO].
+- Separar las funciones de wifi en una parte que se encargue de recibir datos y otra que se encargue de enviar datos [IN PROGRESS].
+- Cambiar el uso de *vTaskResume* y *vTaskSuspend* por semáforos/colas [TO DO].
+- Juntar todas las variables en una o dos estructuras que condensen toda la información [TO DO].
 
-Lei que hay un problema que si sos muy lento, el datapin no se pone en 1 (https://forum.micropython.org/viewtopic.php?t=2678) asi que pase de periodicidad de 500 ms a 50 ms y voy a ver si eso lo resuelve.
-
-SOLUCION (?): Yo ponia al principio el DATA pin en 1 para que despues el HX711 lo cambie pero no lo cambiaba. Lo deje de setear como 1 y ahi funciono, pero no se si esto esta bien.
-
-***************
-Ahora estoy intentando imprimir lo que se mide pero como no puse las cc (celdas de carga) en la plataforma, entonces no tienen peso, pero voy a ver si haciendo fuerza puedo cambiar el valor. Intenté hacer fuerza pero sigue dando 0. No sé si es porque no puse el DATA pin en 1 al principio o porque no hay fuerza suficiente.
-
-***************3/11/20***************
-
-CON DEBUGPRINTSTRING NO FUNCIONA PERO CON UARTWRITESTRING SI
-
-***************8/11/20***************
-
-Por qu� se usa el mutex con ISR (en la p�gina dice que no se puede hacer esto).
-
-***************9/11/20***************
-
-C�mo podemos modificar el programa para que las instrucciones sean m�s r�pidas?
-Preguntar por ADC a freertos (es con interrupciones?).
-
-
-define SAPI_USE_INTERRUPTS
-PRUEBA: bluetooth terminal en el celu con la CIAA
-bajar el rate y probar a ver si hay tiempo de ocio
-subir el stack si hay muchos print
-mandar puntero a la cola/sem crear
-control RC: ADC
+# Errores que se están obteniendo actualmente
+- Pasos que se siguieron: *Se tara a la plataforma sin inconvenientes, se manda por wifi a través de node-red para medir algo (ya sea peso o fuerza, es lo mismo) y cuando se quiere volver a mandar una instrucción por wifi mediante node-red, el programa no recibe nada.*
+- Error que apareció: 
+```
+Error: JTAG-DP STICKY ERROR
+Error: MEM_AP_CSW 0x23000062, MEM_AP_TAR 0x10008004
+Error: Failed to read memory at 0x10008004
+Error: JTAG-DP STICKY ERROR
+Error: MEM_AP_CSW 0x23000050, MEM_AP_TAR 0xa5a5a5a6
+Error: Failed to read memory at 0xa5a5a5a6
+```
