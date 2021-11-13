@@ -28,7 +28,7 @@
 #define GAIN_64			25
 #define GAIN_32			26
 #define XOR_VALUE 		0x800000
-#define CANT_MEDICIONES	15
+#define AVERAGE_N	15
 
 // Constantes de la periodicidad de las tareas
 #define TASK_RATE_1000_MS	1000
@@ -52,7 +52,7 @@ void clear_diff();
 
 // Prototipo de funcion de la tarea
 void task_measurement( void* taskParmPtr );
-void task_wait( void* taskParmPtr );
+void task_hx711_ready( void* taskParmPtr );
 void task_average( void* taskParmPtr );
 void task_tare( void* taskParmPtr );
 void task_weight( void* taskParmPtr );

@@ -42,7 +42,7 @@ int main( void )
     gpioWrite( LED3, ON );
 
     // Creación de las colas
-    create_queue(&queue_measurement,CANT_MEDICIONES,sizeof(unsigned long));
+    create_queue(&queue_measurement,1,sizeof(unsigned long));
     create_queue(&queue_force,1,sizeof(unsigned long));
     create_queue(&queue_rx_wifi,1,sizeof(int));
     create_queue(&queue_jump,1,sizeof(double));
@@ -56,10 +56,8 @@ int main( void )
 
     // Creación y validacion de las tareas
 	create_task(task_tare,"task_tare",SIZE,0,1,NULL);
-	//create_task(task_Rx_WIFI,"task_Rx",SIZE,0,0,NULL);
-	//create_task(task_Tx_WIFI,"task_Tx",SIZE,0,0,NULL);
 
-    	// Iniciar scheduler
+    // Iniciar scheduler
     vTaskStartScheduler();
 
 

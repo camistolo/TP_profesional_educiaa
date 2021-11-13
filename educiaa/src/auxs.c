@@ -13,10 +13,6 @@
 /*==================[definiciones de datos internos]=========================*/
 
 /*==================[definiciones de datos externos]=========================*/
-gpioMap_t teclas[] = {TEC1,TEC2,TEC3,TEC4};
-gpioMap_t leds[]   = {LEDB,LED1,LED2,LED3};
-
-#define N_TECLAS  sizeof(teclas)/sizeof(gpioMap_t)		// 4 * (gpioMap_t / gpioMap_t) = 4
 
 /*==================[declaraciones de funciones internas]====================*/
 

@@ -12,7 +12,6 @@ extern void format( float valor, char *dst, uint8_t pos );
 /*==================[definiciones de datos internos]=========================*/
 
 volatile unsigned long OFFSET = 0;
-int new_measurement = 0;
 float PESO;
 //extern int stage;
 /*
@@ -43,6 +42,14 @@ struct platformMeasurements{
 	float leftPressure[24][14]; //memset(arr, 0, sizeof arr);
 } platformMeasurements_t;*/
 
+
+
+// Modo de medicion
+typedef enum {
+	AVERAGE_MODE,
+	SIMPLE_MODE
+} measurement_mode_t;
+
 // Handles de las tareas
 TaskHandle_t TaskHandle_wait;
 TaskHandle_t TaskHandle_measurement;
@@ -56,40 +63,32 @@ void task_measurement( void* taskParmPtr )
 	// ---------- CONFIGURACIONES ------------------------------
 	TickType_t xPeriodicity =  TASK_RATE_500;		// Tarea periodica cada 500 ms
 	TickType_t xLastWakeTime = xTaskGetTickCount();
-	TickType_t dif = *( (TickType_t*)  taskParmPtr );
+
+	// ---------- CONFIGURACIONES ------------------------------
+	measurement_mode_t* mode = (measurement_mode_t*) taskParmPtr;
 
 	// Inicialización de parámetros
-	size_t i;
+	//size_t i;
 	unsigned long Count = 0;
 	char str_aux[50] = {};
 
 	//gpioWrite(DataPin,1);
 	gpioWrite(ClockPin , 0);
 
-	//create_task(task_wait,"task_wait",SIZE,0,PRIORITY+1,&TaskHandle_wait);
-	//create_task(task_average,"task_average",SIZE,0,PRIORITY+1,NULL);
+	if (mode == AVERAGE_MODE) {
+		create_task(task_average,"task_average",SIZE,0,1,&TaskHandle_average);
+	}
 
     // ---------- REPETIR POR SIEMPRE --------------------------
 	while ( TRUE ){
-		//sprintf(str_aux, "NEW_MEAS: %d \r\n", new_measurement);
-		//uartWriteString(UART,str_aux);
-		if (new_measurement == 0){
-			vTaskResume(TaskHandle_wait);
-			vTaskResume(TaskHandle_average);
-			new_measurement = 1;
-		}
-		//Resumo las tareas de espera y promedio de fuerza
 
 		// Esperar a que el módulo HX711 esté listo
 		if (xSemaphoreTake( sem_measurement  ,  portMAX_DELAY )){
-			gpioWrite( LEDG , ON );
-			vTaskDelay( dif );
-			gpioWrite( LEDG , OFF );
 
 			Count = 0;
 
 			// Medir 24 pulsos
-			for (i = 0;i < GAIN_128;i++)
+			for (size_t i = 0;i < GAIN_128;i++)
 			{
 				gpioWrite(ClockPin , ON);
 				Count=Count<<1;
@@ -98,12 +97,18 @@ void task_measurement( void* taskParmPtr )
 						Count++;
 				}
 			}
-			// Hacer medición final
+
+			// Hacer medicion final
 			gpioWrite(ClockPin , ON);
 			Count=Count^XOR_VALUE;
 			gpioWrite(ClockPin , OFF);
-			delay(50);
+			vTaskDelay( TASK_RATE_50 );
+
+			// Enviar medicion a la tarea correspondiente
 			xQueueSend(queue_measurement , &Count,  portMAX_DELAY);
+			// A esta tarea la elimino en la tarea que recibe la medicion porque si se trata de una medicion
+			// con promedio, entonces se va a tener que hacer un back and forth de esta tarea con la de
+			// average y no tiene sentido eliminarla y crearla constantemente.
 		}
 
 		// Delay periódico
@@ -121,17 +126,19 @@ void task_wait( void* taskParmPtr )
     // ---------- REPETIR POR SIEMPRE --------------------------
 	while ( TRUE ){
 
-		gpioWrite( LEDR , ON );
-		vTaskDelay( 40 / portTICK_RATE_MS );
-		gpioWrite( LEDR , OFF );
+		//gpioWrite( LEDR , ON );
+		//vTaskDelay( 40 / portTICK_RATE_MS );
+		//gpioWrite( LEDR , OFF );
 
 		uartWriteString(UART_USB,"waiting");
 
 		if( !gpioRead(DataPin) ){
-			// Indicar que el módulo ya está listo para empezar a medir
+			// Crear la tarea de medicion
+			measurement_mode_t mode = AVERAGE_MODE;
+			create_task(task_measurement,"task_measurement",SIZE,&mode,1,&TaskHandle_measurement);
+			// Indicar que el modulo ya esta listo para empezar a medir
 			xSemaphoreGive( sem_measurement );
-			//vTaskDelete(NULL);
-			vTaskSuspend(NULL);
+			vTaskDelete(NULL);
 		}
 
 		// Delay periódico
@@ -148,30 +155,31 @@ void task_average( void* taskParmPtr )
 
 	unsigned long f;
 	unsigned long sum = 0;
-	int contador = 0;
-	unsigned long prom;
+	int counter = 0;
+	unsigned long avg;
 	char str_aux[50] = {};
     // ---------- REPETIR POR SIEMPRE --------------------------
 	while ( TRUE ){
 
-		gpioWrite( LEDB , ON );
-		vTaskDelay( 40 / portTICK_RATE_MS );
-		gpioWrite( LEDB , OFF );
+		//gpioWrite( LEDB , ON );
+		//vTaskDelay( 40 / portTICK_RATE_MS );
+		//gpioWrite( LEDB , OFF );
 
 		if(xQueueReceive(queue_measurement , &f,  portMAX_DELAY)){
-			if (contador == CANT_MEDICIONES){
-				prom = sum / CANT_MEDICIONES;
-				contador = 0;
-				sum = 0;
-				xQueueSend(queue_force , &prom,  portMAX_DELAY);
-				vTaskSuspend(TaskHandle_measurement);
-				vTaskSuspend(NULL);
+			if (counter == AVERAGE_N){
+				// Calcular el promedio de las AVERAGE_N mediciones
+				avg = sum / AVERAGE_N;
+				// Enviar el promedio por cola
+				xQueueSend(queue_force , &avg,  portMAX_DELAY);
+				vTaskDelete(TaskHandle_measurement);
+				vTaskDelete(NULL);
 			}
 			else{
 				sum += f;
-				sprintf(str_aux, "f: %lu \r\n", f);
-				uartWriteString(UART_USB,str_aux);
-				contador++;
+				//sprintf(str_aux, "f: %lu \r\n", f);
+				//uartWriteString(UART_USB,str_aux);
+				counter++;
+				// Volver a hacer otra medicion
 				xSemaphoreGive( sem_measurement );
 			}
 		}
@@ -187,33 +195,21 @@ void task_tare( void* taskParmPtr )
 	TickType_t xPeriodicity =  TASK_RATE_500;		// Tarea periodica cada 500 ms
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 
-	TickType_t tiempo_diff = 40 / portTICK_RATE_MS;
-
-	//Creo las tareas de fuerza
-	create_task(task_measurement,"task_measurement",SIZE,&tiempo_diff,1,&TaskHandle_measurement);
+	//Creo la tarea de medicion
 	create_task(task_wait,"task_wait",SIZE,0,1,&TaskHandle_wait);
-	create_task(task_average,"task_average",SIZE,0,1,&TaskHandle_average);
-
-	//Suspendo las tareas que no quiero que funcionen primero
-	vTaskSuspend(TaskHandle_wait);
-	vTaskSuspend(TaskHandle_average);
 
 	unsigned long offset;
 	char str_aux[50] = {};
     // ---------- REPETIR POR SIEMPRE --------------------------
 	while ( TRUE ){
 
-		gpioWrite( LED2 , ON );
-		vTaskDelay( 40 / portTICK_RATE_MS );
-		gpioWrite( LED2 , OFF );
-
 		if(xQueueReceive(queue_force , &offset,  portMAX_DELAY)){			// Esperamos tecla
 			OFFSET = offset;
 			sprintf(str_aux, "Offset: %lu \r\n", offset);
 			uartWriteString(UART_USB,str_aux);
-			gpioWrite( LED2, ON );
-			vTaskDelay( 40 / portTICK_RATE_MS );
-			gpioWrite( LED2 , OFF );
+			//gpioWrite( LED2, ON );
+			//vTaskDelay( 40 / portTICK_RATE_MS );
+			//gpioWrite( LED2 , OFF );
 
 			procotol_x_init( UART_232, 115200 );
 
@@ -233,10 +229,8 @@ void task_weight( void* taskParmPtr )
 	TickType_t xPeriodicity =  TASK_RATE_500;		// Tarea periodica cada 500 ms
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 
-	TickType_t tiempo_diff = 40 / portTICK_RATE_MS;
-
-	new_measurement = 0;
-	vTaskResume(TaskHandle_measurement);
+	//Creo la tarea de medicion
+	create_task(task_wait,"task_wait",SIZE,0,1,&TaskHandle_wait);
 
 	unsigned long fu = 0;
 	char str_aux[50] = {};
@@ -245,9 +239,9 @@ void task_weight( void* taskParmPtr )
     // ---------- REPETIR POR SIEMPRE --------------------------
 	while ( TRUE ){
 
-		gpioWrite( LED2 , ON );
-		vTaskDelay( 40 / portTICK_RATE_MS );
-		gpioWrite( LED2 , OFF );
+		//gpioWrite( LED2 , ON );
+		//vTaskDelay( 40 / portTICK_RATE_MS );
+		//gpioWrite( LED2 , OFF );
 
 		if(xQueueReceive(queue_force , &fu,  portMAX_DELAY)){			// Esperamos tecla
 			gpioWrite( LED1, ON );
@@ -279,8 +273,6 @@ void task_jump( void* taskParmPtr )
 	TickType_t xPeriodicity =  TASK_RATE_500;		// Tarea periodica cada 500 ms
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 
-	TickType_t tiempo_diff = 40 / portTICK_RATE_MS;
-
 	uartWriteString(UART_USB, "TAREA_JUMP");
 
 	//unsigned long offset;
@@ -296,8 +288,8 @@ void task_jump( void* taskParmPtr )
 	bool higher=false;
 	char fl_str_aux[64] = {};
 
-	//Se resume la tarea de medicion para que devuelva un valor y comienzo a contar el tiempo
-	vTaskResume(TaskHandle_measurement);
+	measurement_mode_t mode = SIMPLE_MODE;
+	create_task(task_measurement,"task_measurement",SIZE,&mode,1,&TaskHandle_measurement);
 
     // ---------- REPETIR POR SIEMPRE --------------------------
 	while ( TRUE ){
@@ -307,7 +299,7 @@ void task_jump( void* taskParmPtr )
 
 		//time_start = xTaskGetTickCount();
 
-		if(xQueueReceive(queue_force , &f,  portMAX_DELAY)){			// Esperamos tecla
+		if(xQueueReceive(queue_measurement , &f,  portMAX_DELAY)){	// Esperamos tecla
 			//time_end = xTaskGetTickCount();
 			//time_diff = (time_end - time_start)/1000;
 			time_diff = 0.05; // 50 ms (del delay de la tarea de medicion)
@@ -328,7 +320,8 @@ void task_jump( void* taskParmPtr )
 				}else if (force > PESO){
 					sup_3 += force * time_diff;
 				}else{
-					vTaskSuspend(TaskHandle_measurement);
+					vTaskDelete(TaskHandle_measurement);
+
 					format(sup_3,fl_str_aux,0);
 					sprintf(str_aux, "SUP3: %s \r\n",fl_str_aux);
 					uartWriteString(UART_USB,str_aux);
