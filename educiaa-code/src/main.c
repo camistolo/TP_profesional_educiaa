@@ -9,7 +9,7 @@
 
 /*==================[macros and definitions]=================================*/
 
-#define SAPI_USE_INTERRUPTS
+//#define SAPI_USE_INTERRUPTS
 #define DELAY_TIME 10 // Tiempo de espera en ms.
 #define FRAME_MAX_SIZE 4 // Se espera que el mensaje sea del estilo >n<, con n entre 0 y 9.
 
@@ -29,7 +29,6 @@ bool_t wait_flag = true;
 char meas_char;
 
 SemaphoreHandle_t xSemaphoreMeasureType;
-SemaphoreHandle_t xSemaphoreMeasureWeight;
 QueueHandle_t xMeasureQueue = NULL;
 
 /*==================[internal functions definition]==========================*/
@@ -53,8 +52,8 @@ int main(void){
    /* Prendo un led para dar señal de vida*/
    gpioWrite( LED3, ON );
 
-   xSemaphoreMeasureType = xSemaphoreCreateBinary();
-   xSemaphoreMeasureWeight = xSemaphoreCreateBinary();
+   //xSemaphoreMeasureType = xSemaphoreCreateBinary();
+   xMeasureQueue = xQueueCreate( 1, sizeof(int) );
 
 	xTaskCreate(
 		task_wait_wifi,                  	// Funcion de la tarea a ejecutar
@@ -65,14 +64,14 @@ int main(void){
 		0                             		// Puntero a la tarea creada en el sistema
 	);
 
-	xTaskCreate(
-		task_send_wifi,                  	// Funcion de la tarea a ejecutar
-		( const char * )"task_send_wifi", 	// Nombre de la tarea como String amigable para el usuario
-		configMINIMAL_STACK_SIZE*2,   		// Cantidad de stack de la tarea
-		0,                            		// Parametros de tarea
-		tskIDLE_PRIORITY+1,           		// Prioridad de la tarea
-		0                             		// Puntero a la tarea creada en el sistema
-	);
+//	xTaskCreate(
+//		task_send_wifi,                  	// Funcion de la tarea a ejecutar
+//		( const char * )"task_send_wifi", 	// Nombre de la tarea como String amigable para el usuario
+//		configMINIMAL_STACK_SIZE*2,   		// Cantidad de stack de la tarea
+//		0,                            		// Parametros de tarea
+//		tskIDLE_PRIORITY+1,           		// Prioridad de la tarea
+//		0                             		// Puntero a la tarea creada en el sistema
+//	);
 
 
 
@@ -91,18 +90,21 @@ void task_wait_wifi( void* pvParameters )
 
 	//xSemaphoreMeasureType = xSemaphoreCreateBinary();
 
-	xMeasureQueue = xQueueCreate( 1, sizeof(int) );
+
 
 	//char c;
 	// ---------- REPETIR POR SIEMPRE --------------------------
 	while( TRUE )
 	{
 
-		if (wait_flag)
-		{
-			xSemaphoreTake( xSemaphoreMeasureType, ( TickType_t ) 0 );
-			wait_flag = false;
-		}
+//		if (wait_flag)
+//		{
+//			xSemaphoreTake( xSemaphoreMeasureType, ( TickType_t ) 0 );
+//			wait_flag = false;
+//		}
+
+		//if(xSemaphoreTake( xSemaphoreMeasureType, ( TickType_t ) 0 ) == pdTRUE)
+
 
 		meas_char = uartRxRead( UART_USED );
 		vTaskDelay(1); // Overrun Error. Esta recibiendo información más rápido que lo que el código lo puede procesar.
@@ -143,11 +145,18 @@ void task_wait_wifi( void* pvParameters )
 				//meas_char = message_buffer[1];
 				//uartWriteByte(UART_USB, c);
 
+				xTaskCreate(
+						task_send_wifi,                  	// Funcion de la tarea a ejecutar
+						( const char * )"task_send_wifi", 	// Nombre de la tarea como String amigable para el usuario
+						configMINIMAL_STACK_SIZE*2,   		// Cantidad de stack de la tarea
+						0,                            		// Parametros de tarea
+						tskIDLE_PRIORITY+1,           		// Prioridad de la tarea
+						0                             		// Puntero a la tarea creada en el sistema
+					);
+
 				xQueueSend( xMeasureQueue, ( void * ) &message_buffer, ( TickType_t ) 0 );
 
-				xSemaphoreGive( xSemaphoreMeasureType );
-
-				//uartWriteString( UART_USB, message_buffer);
+				vTaskDelete(NULL);
 			}
 			else
 			{
@@ -174,7 +183,8 @@ void task_wait_wifi( void* pvParameters )
 
 		// Envia la tarea al estado bloqueado durante xPeriodicity (delay periodico)
 		//vTaskDelayUntil( &xLastWakeTime , xPeriodicity );
-		//}
+
+
 	}
 }
 
@@ -188,10 +198,10 @@ void task_send_wifi( void* pvParameters )
 	// ---------- REPETIR POR SIEMPRE --------------------------
 	while( TRUE )
 	{
-		if( xSemaphoreTake( xSemaphoreMeasureType, ( TickType_t ) 10 ) == pdTRUE )
-		{
-			xQueueReceive( xMeasureQueue, &( meas_char_new ), ( TickType_t ) 10 );
-
+		//if( xSemaphoreTake( xSemaphoreMeasureType, ( TickType_t ) 10 ) == pdTRUE )
+		//{
+			if(xQueueReceive( xMeasureQueue, &( meas_char_new ), ( TickType_t ) 10 ) == pdTRUE)
+			{
 			switch (meas_char_new)
 			{
 				case WEIGHT_MEAS:
@@ -220,16 +230,22 @@ void task_send_wifi( void* pvParameters )
 					uartWriteString( UART_USB, "Error: Invalid measurement option.\n");
 			}
 
-			xQueueReset(xMeasureQueue);
+			//xQueueReset(xMeasureQueue);
 
-			//uartWriteString( UART_USB, "Se mando\n");
-			//uartWriteString( UART_USB, message_buffer);
+			//wait_flag = true;
+			//xSemaphoreGive( xSemaphoreMeasureType );
 
-			wait_flag = true;
-			xSemaphoreGive( xSemaphoreMeasureType );
-			vTaskDelay(xPeriodicity); // Si no pongo un delay el semaforo lo vuelve a tomar esta tarea y se queda aca en un loop infinito.
+			xTaskCreate(
+					task_wait_wifi,                  	// Funcion de la tarea a ejecutar
+					( const char * )"task_wait_wifi", 	// Nombre de la tarea como String amigable para el usuario
+					configMINIMAL_STACK_SIZE*2,   		// Cantidad de stack de la tarea
+					0,                            		// Parametros de tarea
+					tskIDLE_PRIORITY+1,           		// Prioridad de la tarea
+					0                             		// Puntero a la tarea creada en el sistema
+				);
+			vTaskDelete(NULL);
 		}
-
+		vTaskDelayUntil(&xLastWakeTime, xPeriodicity); // Si no pongo un delay el semaforo lo vuelve a tomar esta tarea y se queda aca en un loop infinito.
 	}
 }
 
