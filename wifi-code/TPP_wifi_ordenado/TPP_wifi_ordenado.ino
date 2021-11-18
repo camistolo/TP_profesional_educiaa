@@ -9,14 +9,6 @@
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager
 #include <ArduinoJson.h>          //https://github.com/bblanchon/ArduinoJson
 
-#define Rx 3 // GPIO3
-#define Tx 1 // GPIO1
-#define WEIGHT_MEAS_STR "1"
-#define FORCE_MEAS_STR "2"
-#define PRESSURE_MEAS_STR "3"
-#define HEIGHT_MEAS_STR "4"
-#define ERROR_MEAS_STR "5"
-
 const char weight_meas = '1';
 const char force_meas = '2';
 const char pressure_meas = '3';
@@ -217,26 +209,21 @@ void callback(String topic, byte* message, unsigned int length)
       if(messageTemp == "medir peso")
       {
         serial_print(weight_meas);
-        //serial_print(WEIGHT_MEAS_STR);
       }
       else if(messageTemp == "medir fuerza")
       {
         serial_print(force_meas);
-        //serial_print(FORCE_MEAS_STR);
       }
       else if(messageTemp == "medir presion")
       {
         serial_print(pressure_meas);
-        //serial_print(PRESSURE_MEAS_STR);
       }
       else if(messageTemp == "medir altura")
       {
         serial_print(height_meas);
-        //serial_print(HEIGHT_MEAS_STR);
       }else
       {
         serial_print(error_meas);
-        //serial_print(ERROR_MEAS_STR);
       }
   }
 }
