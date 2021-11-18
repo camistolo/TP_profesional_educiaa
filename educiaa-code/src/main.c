@@ -28,7 +28,6 @@ char * index_str;
 bool_t wait_flag = true;
 char meas_char;
 
-SemaphoreHandle_t xSemaphoreMeasureType;
 QueueHandle_t xMeasureQueue = NULL;
 
 /*==================[internal functions definition]==========================*/
@@ -52,7 +51,6 @@ int main(void){
    /* Prendo un led para dar señal de vida*/
    gpioWrite( LED3, ON );
 
-   //xSemaphoreMeasureType = xSemaphoreCreateBinary();
    xMeasureQueue = xQueueCreate( 1, sizeof(int) );
 
 	xTaskCreate(
@@ -63,18 +61,6 @@ int main(void){
 		tskIDLE_PRIORITY+1,           		// Prioridad de la tarea
 		0                             		// Puntero a la tarea creada en el sistema
 	);
-
-//	xTaskCreate(
-//		task_send_wifi,                  	// Funcion de la tarea a ejecutar
-//		( const char * )"task_send_wifi", 	// Nombre de la tarea como String amigable para el usuario
-//		configMINIMAL_STACK_SIZE*2,   		// Cantidad de stack de la tarea
-//		0,                            		// Parametros de tarea
-//		tskIDLE_PRIORITY+1,           		// Prioridad de la tarea
-//		0                             		// Puntero a la tarea creada en el sistema
-//	);
-
-
-
 
    vTaskStartScheduler();
 
@@ -88,23 +74,9 @@ void task_wait_wifi( void* pvParameters )
 
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 
-	//xSemaphoreMeasureType = xSemaphoreCreateBinary();
-
-
-
-	//char c;
 	// ---------- REPETIR POR SIEMPRE --------------------------
 	while( TRUE )
 	{
-
-//		if (wait_flag)
-//		{
-//			xSemaphoreTake( xSemaphoreMeasureType, ( TickType_t ) 0 );
-//			wait_flag = false;
-//		}
-
-		//if(xSemaphoreTake( xSemaphoreMeasureType, ( TickType_t ) 0 ) == pdTRUE)
-
 
 		meas_char = uartRxRead( UART_USED );
 		vTaskDelay(1); // Overrun Error. Esta recibiendo información más rápido que lo que el código lo puede procesar.
@@ -140,11 +112,6 @@ void task_wait_wifi( void* pvParameters )
 				/* incremento el indice */
 				index++;
 
-				/* señalizo a la aplicacion */
-				// HAY QUE ENVIAR EL DATO A LA TAREA DE MEDICIÓN
-				//meas_char = message_buffer[1];
-				//uartWriteByte(UART_USB, c);
-
 				xTaskCreate(
 						task_send_wifi,                  	// Funcion de la tarea a ejecutar
 						( const char * )"task_send_wifi", 	// Nombre de la tarea como String amigable para el usuario
@@ -179,12 +146,6 @@ void task_wait_wifi( void* pvParameters )
 				/* no hago nada, descarto el byte */
 			}
 		}
-
-
-		// Envia la tarea al estado bloqueado durante xPeriodicity (delay periodico)
-		//vTaskDelayUntil( &xLastWakeTime , xPeriodicity );
-
-
 	}
 }
 
@@ -198,52 +159,45 @@ void task_send_wifi( void* pvParameters )
 	// ---------- REPETIR POR SIEMPRE --------------------------
 	while( TRUE )
 	{
-		//if( xSemaphoreTake( xSemaphoreMeasureType, ( TickType_t ) 10 ) == pdTRUE )
-		//{
-			if(xQueueReceive( xMeasureQueue, &( meas_char_new ), ( TickType_t ) 10 ) == pdTRUE)
-			{
-			switch (meas_char_new)
-			{
-				case WEIGHT_MEAS:
-					// Activate weight measurement task
-					//xSemaphoreTake( xSemaphoreMeasureWeight, ( TickType_t ) 0 );
-					//xSemaphoreGive( xSemaphoreMeasureWeight);
-					uartWriteString( UART_USB, "Weight\n");
-					uartWriteString( UART_USED, ">155<");
-					break;
-				case FORCE_MEAS:
-					// Activate force measurement task
-					uartWriteString( UART_USB, "Force\n");
-					break;
+		if(xQueueReceive( xMeasureQueue, &( meas_char_new ), ( TickType_t ) 10 ) == pdTRUE)
+		{
+		switch (meas_char_new)
+		{
+			case WEIGHT_MEAS:
+				// Activate weight measurement task
+				//xSemaphoreTake( xSemaphoreMeasureWeight, ( TickType_t ) 0 );
+				//xSemaphoreGive( xSemaphoreMeasureWeight);
+				uartWriteString( UART_USB, "Weight\n");
+				uartWriteString( UART_USED, ">155<");
+				break;
+			case FORCE_MEAS:
+				// Activate force measurement task
+				uartWriteString( UART_USB, "Force\n");
+				break;
 
-				case PRESSURE_MEAS:
-					// Activate pressure measurement task
-					uartWriteString( UART_USB, "Pressure\n");
-					break;
+			case PRESSURE_MEAS:
+				// Activate pressure measurement task
+				uartWriteString( UART_USB, "Pressure\n");
+				break;
 
-				case HEIGHT_MEAS:
-					// Activate height measurement task
-					uartWriteString( UART_USB, "Height\n");
-					break;
+			case HEIGHT_MEAS:
+				// Activate height measurement task
+				uartWriteString( UART_USB, "Height\n");
+				break;
 
-				default:
-					uartWriteString( UART_USB, "Error: Invalid measurement option.\n");
-			}
+			default:
+				uartWriteString( UART_USB, "Error: Invalid measurement option.\n");
+		}
 
-			//xQueueReset(xMeasureQueue);
-
-			//wait_flag = true;
-			//xSemaphoreGive( xSemaphoreMeasureType );
-
-			xTaskCreate(
-					task_wait_wifi,                  	// Funcion de la tarea a ejecutar
-					( const char * )"task_wait_wifi", 	// Nombre de la tarea como String amigable para el usuario
-					configMINIMAL_STACK_SIZE*2,   		// Cantidad de stack de la tarea
-					0,                            		// Parametros de tarea
-					tskIDLE_PRIORITY+1,           		// Prioridad de la tarea
-					0                             		// Puntero a la tarea creada en el sistema
-				);
-			vTaskDelete(NULL);
+		xTaskCreate(
+				task_wait_wifi,                  	// Funcion de la tarea a ejecutar
+				( const char * )"task_wait_wifi", 	// Nombre de la tarea como String amigable para el usuario
+				configMINIMAL_STACK_SIZE*2,   		// Cantidad de stack de la tarea
+				0,                            		// Parametros de tarea
+				tskIDLE_PRIORITY+1,           		// Prioridad de la tarea
+				0                             		// Puntero a la tarea creada en el sistema
+			);
+		vTaskDelete(NULL);
 		}
 		vTaskDelayUntil(&xLastWakeTime, xPeriodicity); // Si no pongo un delay el semaforo lo vuelve a tomar esta tarea y se queda aca en un loop infinito.
 	}
