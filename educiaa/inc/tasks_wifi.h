@@ -20,7 +20,8 @@
 
 /*==================[definiciones de datos internos]=========================*/
 
-#define FRAME_MAX_SIZE  200
+#define FRAME_MAX_SIZE  4
+#define UART_USED 		UART_232
 
 /*==================[definiciones de datos externos]=========================*/
 
@@ -29,11 +30,10 @@
 /*==================[declaraciones de funciones externas]====================*/
 
 // Prototipo de funcion de la tarea
-void task_Rx_WIFI( void* taskParmPtr );
-void task_Tx_WIFI( void* taskParmPtr );
-void wait_frame( void* pvParameters );
+void task_receive_wifi( void* pvParameters );
+void task_choose_measurement( void* pvParameters );
+
 
 void format( float valor, char *dst, uint8_t pos );
-
 
 #endif /* _TASKS_WIFI_H_ */

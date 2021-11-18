@@ -33,11 +33,25 @@
 // Constantes de la periodicidad de las tareas
 #define TASK_RATE_1000_MS	1000
 #define TASK_RATE_500_MS	500
+#define TASK_RATE_100_MS	100
+#define TASK_RATE_75_MS		75
 #define TASK_RATE_50_MS		50
+#define TASK_RATE_25_MS		25
+#define TASK_RATE_20_MS		20
+#define TASK_RATE_5_MS		5
+#define TASK_RATE_1_MS		1
+
 
 #define TASK_RATE_1000 pdMS_TO_TICKS(TASK_RATE_1000_MS)
 #define TASK_RATE_500 pdMS_TO_TICKS(TASK_RATE_500_MS)
+#define TASK_RATE_100 pdMS_TO_TICKS(TASK_RATE_100_MS)
+#define TASK_RATE_75 pdMS_TO_TICKS(TASK_RATE_75_MS)
 #define TASK_RATE_50 pdMS_TO_TICKS(TASK_RATE_50_MS)
+#define TASK_RATE_25 pdMS_TO_TICKS(TASK_RATE_25_MS)
+#define TASK_RATE_20 pdMS_TO_TICKS(TASK_RATE_20_MS)
+#define TASK_RATE_5 pdMS_TO_TICKS(TASK_RATE_5_MS)
+#define TASK_RATE_1 pdMS_TO_TICKS(TASK_RATE_1_MS)
+
 
 /*==================[definiciones de datos internos]=========================*/
 
@@ -51,9 +65,9 @@ TickType_t get_diff();
 void clear_diff();
 
 // Prototipo de funcion de la tarea
-void task_measurement( void* taskParmPtr );
+void task_measure_force( void* taskParmPtr );
 void task_hx711_ready( void* taskParmPtr );
-void task_average( void* taskParmPtr );
+void task_average_force( void* taskParmPtr );
 void task_tare( void* taskParmPtr );
 void task_weight( void* taskParmPtr );
 void task_jump( void* taskParmPtr );

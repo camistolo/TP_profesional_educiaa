@@ -3,13 +3,11 @@
 DEBUG_PRINT_ENABLE;
 
 //Handle de la cola
-extern QueueHandle_t queue_measurement;
 extern QueueHandle_t queue_force;
-extern QueueHandle_t queue_rx_wifi;
+extern QueueHandle_t queue_force_average;
 extern QueueHandle_t queue_jump;
-//extern QueueHandle_t queue_pressure;
-extern SemaphoreHandle_t sem_measurement;
-extern SemaphoreHandle_t mutex;
+extern QueueHandle_t queue_command_wifi;
+extern SemaphoreHandle_t sem_measure_force;
 
 /*==================[declaraciones de funciones internas]====================*/
 
@@ -42,17 +40,13 @@ int main( void )
     gpioWrite( LED3, ON );
 
     // Creación de las colas
-    create_queue(&queue_measurement,1,sizeof(unsigned long));
     create_queue(&queue_force,1,sizeof(unsigned long));
-    create_queue(&queue_rx_wifi,1,sizeof(int));
+    create_queue(&queue_force_average,1,sizeof(unsigned long));
     create_queue(&queue_jump,1,sizeof(double));
-    //create_queue(&queue_pressure,1,sizeof(int[(MAX_ROW*2)-1][(MAX_COL*2)-1]));
+    create_queue(&queue_command_wifi,1,sizeof(int));
 
     // Creación del semáforo
-    create_semaphore(&sem_measurement);
-
-    // Creación del mutex
-    create_mutex(&mutex);
+    create_semaphore(&sem_measure_force);
 
     // Creación y validacion de las tareas
 	create_task(task_tare,"task_tare",SIZE,0,1,NULL);

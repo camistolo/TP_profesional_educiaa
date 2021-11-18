@@ -2,28 +2,17 @@
 
 DEBUG_PRINT_ENABLE;
 
-SemaphoreHandle_t mutex;
-QueueHandle_t queue_rx_wifi;
+QueueHandle_t queue_command_wifi;
 extern TaskHandle_t TaskHandle_weight;
 
 #define FRAME_MAX_SIZE  200
 
-#define WEIGHT_MEAS "1"
-#define FORCE_MEAS "2"
-#define PRESSURE_MEAS "3"
-#define HEIGHT_MEAS "4"
-#define ERROR_MEAS "5"
-
-#define WEIGHT_MEAS_STR ">1<"
-#define FORCE_MEAS_STR ">2<"
-#define PRESSURE_MEAS_STR ">3<"
-#define HEIGHT_MEAS_STR ">4<"
-#define ERROR_MEAS_STR ">5<"
-
-uartMap_t         uart_used;
-SemaphoreHandle_t new_frame_signal;
-SemaphoreHandle_t sem_tx;
-SemaphoreHandle_t mutex;
+typedef enum{
+	WEIGHT_MEAS = 1,
+	FORCE_MEAS,
+	PRESSURE_MEAS,
+	FORCE_PRESSURE_MEAS
+} measurement_type_t;
 
 
 char buffer[FRAME_MAX_SIZE];
@@ -76,264 +65,137 @@ char* itoa(int value, char* result, int base) {
 
 /*==================[definiciones de funciones externas]=====================*/
 
-
-void wait_frame( void* pvParameters )
+void task_receive_wifi( void* pvParameters )
 {
-    char* data;
-    uint16_t size;
+	TickType_t xPeriodicity =  1000 / portTICK_RATE_MS;		// Tarea periodica cada 1000 ms
 
-    uint16_t frame_counter = 0;
+	TickType_t xLastWakeTime = xTaskGetTickCount();
 
-    while( TRUE )
-    {
-        protocol_wait_frame();
+	char meas_char;
+	int message_buffer;
 
-        protocol_get_frame_ref( &data, &size );
-
-        // int a = sprintf( &data[size], " %u\n", frame_counter );
-
-        /* envio respuesta */
-        protocol_transmit_frame( data, size); //+ a );
-
-        protocol_discard_frame();
-
-        /* hago un blink para que se vea */
-        gpioToggle( LEDB );
-        vTaskDelay( 100/portTICK_RATE_MS );
-        gpioToggle( LEDB );
-
-        frame_counter++;
-    }
-}
-
-void protocol_tx_event( void *noUsado )
-{
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    uartTxWrite( uart_used, buffer_tx[counter_tx] );
-
-    counter_tx++;
-
-    if( counter_tx==size_tx )
-    {
-        /* deshabilito la isr de transmision */
-        uartCallbackClr( uart_used, UART_TRANSMITER_FREE );
-
-        xSemaphoreGiveFromISR( sem_tx, &xHigherPriorityTaskWoken );
-    }
-
-    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
-}
-
-void protocol_rx_event( void *noUsado )
-{
-    ( void* ) noUsado;
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-    /* leemos el caracter recibido */
-    //char c = uartRxRead( UART_232 );
-    char c = uartRxRead( UART_232 );
-
-    BaseType_t signaled = xSemaphoreTakeFromISR( mutex, &xHigherPriorityTaskWoken );
-
-    if( signaled )
-    {
-        if( FRAME_MAX_SIZE-1==index )
-        {
-            /* reinicio el paquete */
-            index = 0;
-        }
-
-        if( c=='>' )
-        {
-            if( index==0 )
-            {
-                /* 1er byte del frame*/
-            }
-            else
-            {
-                /* fuerzo el arranque del frame (descarto lo anterior)*/
-                index = 0;
-            }
-
-            buffer[index] = c;
-
-            /* incremento el indice */
-            index++;
-        }
-        else if( c=='<' )
-        {
-            /* solo cierro el fin de frame si al menos se recibio un start.*/
-            if( index>=1 )
-            {
-                /* se termino el paquete - guardo el dato */
-                buffer[index] = c;
-
-                /* incremento el indice */
-                index++;
-
-                /* Deshabilito todas las interrupciones de UART_USB */
-                uartCallbackClr( uart_used, UART_RECEIVE );
-
-                /* señalizo a la aplicacion */
-                xSemaphoreGiveFromISR( new_frame_signal, &xHigherPriorityTaskWoken );
-            }
-            else
-            {
-                /* no hago nada, descarto el byte */
-            }
-        }
-        else
-        {
-            /* solo cierro el fin de frame si al menos se recibio un start.*/
-            if( index>=1 )
-            {
-                /* guardo el dato */
-                buffer[index] = c;
-
-                /* incremento el indice */
-                index++;
-            }
-            else
-            {
-                /* no hago nada, descarto el byte */
-            }
-        }
-
-        xSemaphoreGiveFromISR( mutex, &xHigherPriorityTaskWoken );
-    }
-
-    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
-}
-
-void procotol_x_init( uartMap_t uart, uint32_t baudRate )
-{
-    /* CONFIGURO EL DRIVER */
-
-    uart_used = uart;
-
-    /* Inicializar la UART_USB junto con las interrupciones de Tx y Rx */
-    uartConfig( uart, baudRate );
-
-    /* Seteo un callback al evento de recepcion y habilito su interrupcion */
-    uartCallbackSet( uart, UART_RECEIVE, protocol_rx_event, NULL );
-
-    /* Habilito todas las interrupciones de UART_USB */
-    uartInterrupt( uart, true );
-
-    /* CONFIGURO LA PARTE LOGICA */
-    index = 0;
-    new_frame_signal = xSemaphoreCreateBinary();
-    sem_tx = xSemaphoreCreateBinary();
-    mutex = xSemaphoreCreateMutex();
-}
-
-void protocol_wait_frame()
-{
-    xSemaphoreTake( new_frame_signal, portMAX_DELAY );
-    xSemaphoreTake( mutex, 0 );
-}
-
-void  protocol_get_frame_ref( char** data, uint16_t* size )
-{
-    *data = buffer;
-    *size = index;
-}
-
-void protocol_discard_frame()
-{
-    /* indico que se puede inciar un paquete nuevo */
-    index = 0;
-
-    /* libero la seccion critica, para que el handler permita ejecutarse */
-    xSemaphoreGive( mutex );
-
-    /* limpio cualquier interrupcion que hay ocurrido durante el procesamiento */
-    uartClearPendingInterrupt( uart_used );
-
-    /* habilito isr rx  de UART_USB */
-    uartCallbackSet( uart_used, UART_RECEIVE, protocol_rx_event, NULL );
-}
-
-void protocol_transmit_frame( char* data, uint16_t size )
-{
-	uartConfig( UART_USB, 115200 );
-
-	if (strcmp(data, WEIGHT_MEAS_STR)==0)
+	// ---------- REPETIR POR SIEMPRE --------------------------
+	while( TRUE )
 	{
-		uartConfig( UART_USB, 115200 );
+		meas_char = uartRxRead( UART_USED );
+		vTaskDelay(1); // Overrun Error. Esta recibiendo información más rápido que lo que el código lo puede procesar.
 
-		data = itoa(50+counter_tx, data, 10);
+		if( FRAME_MAX_SIZE-1==index )
+		{
+			/* reinicio el paquete */
+			index = 0;
+		}
 
-		// Hacer medidición de peso
-		//data = "75"; // Supongo que el peso me dio 65. Luego se reemplazaría por el valor medido.
-		print_data_uart (WEIGHT_MEAS, &data);
-		//char saux[50] = "";
-		//sprintf(saux, "%u", eTaskGetState(TaskHandle_weight));
-		//uartWriteString(UART_USB, saux);
-		create_task(task_weight,"task_weight",SIZE,0,1,TaskHandle_weight);
+		if( meas_char == '>' )
+		{
+			if( index==0 )
+			{
+				/* 1er byte del frame*/
+			}
+			else
+			{
+				/* fuerzo el arranque del frame (descarto lo anterior)*/
+				index = 0;
+			}
 
-	}else if (strcmp(data, FORCE_MEAS_STR)==0)
-	{
-		// Hacer medidición de fuerza
-		data = "245";
-		print_data_uart (FORCE_MEAS, &data);
-		create_task(task_jump,"task_jump",SIZE,0,1,NULL);
-		//sprintf(data,"%s%s%s%s", ">", "2", "42", "<");
-	}else if (strcmp(data, PRESSURE_MEAS_STR)==0)
-	{
-		// Hacer medidición de presion
-		data = "102";
-		print_data_uart (PRESSURE_MEAS, &data);
-		create_task(task_pressure, "task_pressure",SIZE,0,1,NULL);
-		create_task(task_print_matrix, "task_print_matrix",SIZE,0,1,NULL);
-		//sprintf(data,"%s%s%s%s", ">", "3", "102", "<");
+			/* incremento el indice */
+			index++;
+		}
+		else if( meas_char == '<' )
+		{
+			/* solo cierro el fin de frame si al menos se recibio un start.*/
+			if( index>=1 )
+			{
+				/* se termino el paquete - guardo el dato */
+
+				/* incremento el indice */
+				index++;
+
+				uartWriteString(UART_USB, "Received: ");
+				//uartWriteByte(UART_USB, message_buffer);
+				uartWriteString(UART_USB, "\n");
+
+				create_task(task_choose_measurement,"task_choose_measurement",SIZE,0,1,NULL);
+				xQueueSend(queue_command_wifi , &message_buffer,  portMAX_DELAY);
+
+				vTaskDelete(NULL);
+			}
+			else
+			{
+				/* no hago nada, descarto el byte */
+			}
+		}
+		else
+		{
+			/* solo cierro el fin de frame si al menos se recibio un start.*/
+			if( index >= 1 )
+			{
+				/* guardo el dato */
+				message_buffer = meas_char - '0';
+				//uartWriteByte(UART_USB, message_buffer);
+
+				/* incremento el indice */
+				index++;
+			}
+			else
+			{
+				/* no hago nada, descarto el byte */
+			}
+		}
+		// Delay periódico
+		vTaskDelayUntil( &xLastWakeTime , xPeriodicity );
 	}
-
-	uartWriteString( UART_USB, data );
-
-	uartWriteString( uart_used, data );
-
-    //buffer_tx = data ;
-	//buffer_tx = ">420<" ;
-	//uartConfig( uart_used, 115200 );
-	//uartWriteString( uart_used, buffer_tx );
-	size_tx = size;
-
-    counter_tx = 0;
-
-    uartCallbackSet( uart_used, UART_TRANSMITER_FREE, protocol_tx_event, NULL );
-
-    /* dispara la 1ra interrupcion */
-    uartSetPendingInterrupt( uart_used );
-
-    xSemaphoreTake( sem_tx, portMAX_DELAY );
 }
 
-void print_data_uart (char * meas_type, char ** data_str)
+void task_choose_measurement( void* pvParameters )
 {
 
-	char data_aux[FRAME_MAX_SIZE] = ">";
-	char closing_str[FRAME_MAX_SIZE] = "<";
-	size_t i = 0;
+	TickType_t xPeriodicity =  1000 / portTICK_RATE_MS;		// Tarea periodica cada 1000 ms
+	TickType_t xLastWakeTime = xTaskGetTickCount();
 
-	strcat(data_aux, meas_type);
-	strcat(data_aux, *data_str);
-	strcat(data_aux, closing_str);
+	measurement_type_t meas_type;
 
-	uartWriteString( UART_USB, "\n Data aux: " );
-	uartWriteString( UART_USB, data_aux );
-
-/*
-	for(i = 0; i<strlen(data_aux); i++)
+	uartWriteString(UART_USB, "command: ");
+	// ---------- REPETIR POR SIEMPRE --------------------------
+	while( TRUE )
 	{
-		uartWriteString( UART_USB, "for \n" );
-		data_str[i] = data_aux[i];
-		uartWriteString( UART_USB, "for after \n" );
-	}
-	*/
-	*data_str = data_aux;
-	uartWriteString( UART_USB, "\n Data aux: " );
-	uartWriteString( UART_USB, *data_str );
+		if(xQueueReceive(queue_command_wifi , &meas_type,  portMAX_DELAY))
+		{
+			uartWriteByte(UART_USB, meas_type);
+			uartWriteString(UART_USB,"\n");
+			switch (meas_type) {
+				case 49:
+					uartWriteString(UART_USB, "49");
+					break;
+				case WEIGHT_MEAS:
+					// Activate weight measurement task
+					//xSemaphoreTake( xSemaphoreMeasureWeight, ( TickType_t ) 0 );
+					//xSemaphoreGive( xSemaphoreMeasureWeight);
+					uartWriteString( UART_USB, "Weight\n");
+//					uartWriteString( UART_USED, ">155<");
+					create_task(task_weight,"task_weight",SIZE,0,1,NULL);
+					break;
+				case FORCE_MEAS:
+					// Activate force measurement task
+					uartWriteString( UART_USB, "Force\n");
+					create_task(task_jump,"task_jump",SIZE,0,1,NULL);
+					break;
 
+				case PRESSURE_MEAS:
+					// Activate pressure measurement task
+					uartWriteString( UART_USB, "Pressure\n");
+					break;
+
+				case FORCE_PRESSURE_MEAS:
+					// Activate height measurement task
+					uartWriteString( UART_USB, "Height\n");
+					break;
+				default:
+					uartWriteString( UART_USB, "Error: Invalid measurement option.\n");
+			}
+		}
+		vTaskDelete(NULL);
+	}
 }
+
 /*==================[fin del archivo]========================================*/
