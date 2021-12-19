@@ -1,4 +1,6 @@
-#include <stdio.h>
-#include "sapi.h"
+#ifndef UTILITIES_H
+#define UTILITIES_H
 
-char* itoa(int value, char* result, int base);
+void gpio_config(void);
+
+#endif //UTILITIES_H

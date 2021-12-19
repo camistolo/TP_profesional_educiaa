@@ -1,25 +1,74 @@
 #include "utilities.h"
+#include "sapi.h"
+#include "tasks_pressure.h"
 
-char* itoa(int value, char* result, int base) {
-   // check that the base if valid
-   if (base < 2 || base > 36) { *result = '\0'; return result; }
+// ****************************
+// Sin PCB:
+/*
+extern const int demuxY0;
+extern const int demuxY1;
+extern const int demuxY2;
+extern const int demuxY3;
+extern const int demuxY4;
+extern const int demuxY5;
+extern const int demuxY6;
+extern const int demuxY7;
+extern const int demuxY8;
+extern const int demuxY9;
+extern const int demuxY10;
+extern const int demuxY11;
+extern const int demuxY12;
+extern const int demuxY13;
+*/
+// ****************************
 
-   char* ptr = result, *ptr1 = result, tmp_char;
-   int tmp_value;
 
-   do {
-      tmp_value = value;
-      value /= base;
-      *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz" [35 + (tmp_value - value * base)];
-   } while ( value );
+extern const int demuxS0;
+extern const int demuxS1;
+extern const int demuxS2;
+extern const int demuxS3;
+extern const int demuxSIG;
 
-   // Apply negative sign
-   if (tmp_value < 0) *ptr++ = '-';
-   *ptr-- = '\0';
-   while(ptr1 < ptr) {
-      tmp_char = *ptr;
-      *ptr--= *ptr1;
-      *ptr1++ = tmp_char;
-   }
-   return result;
+
+extern const int muxS0; // GPIO25
+extern const int muxS1; // GPIO28
+extern const int muxS2; // GPIO27
+extern const int muxS3; //GPIO29
+extern const int muxSIG;
+
+
+void gpio_config(void)
+{
+  	// ****************************
+	// Sin PCB:
+	/*
+	gpioInit(demuxY0, GPIO_OUTPUT);
+	gpioInit(demuxY1, GPIO_OUTPUT);
+	gpioInit(demuxY2, GPIO_OUTPUT);
+	gpioInit(demuxY3, GPIO_OUTPUT);
+	gpioInit(demuxY4, GPIO_OUTPUT);
+	gpioInit(demuxY5, GPIO_OUTPUT);
+	gpioInit(demuxY6, GPIO_OUTPUT);
+	gpioInit(demuxY7, GPIO_OUTPUT);
+	gpioInit(demuxY8, GPIO_OUTPUT);
+	gpioInit(demuxY9, GPIO_OUTPUT);
+	gpioInit(demuxY10, GPIO_OUTPUT);
+	gpioInit(demuxY11, GPIO_OUTPUT);
+	gpioInit(demuxY12, GPIO_OUTPUT);
+	gpioInit(demuxY13, GPIO_OUTPUT);
+	*/
+	// ****************************
+
+
+   gpioInit(demuxS0, GPIO_OUTPUT);
+   gpioInit(demuxS1, GPIO_OUTPUT);
+   gpioInit(demuxS2, GPIO_OUTPUT);
+   gpioInit(demuxS3, GPIO_OUTPUT);
+   gpioInit(demuxSIG, GPIO_OUTPUT);
+
+
+   gpioInit(muxS0, GPIO_OUTPUT);
+   gpioInit(muxS1, GPIO_OUTPUT);
+   gpioInit(muxS2, GPIO_OUTPUT);
+   gpioInit(muxS3, GPIO_OUTPUT);
 }
