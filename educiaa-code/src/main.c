@@ -28,16 +28,19 @@ int main(void){
    boardConfig();
 
    // UART for debug messages
-   uartConfig( UART_USB, 115200 );
-   uartWriteString( UART_USB, "TP Profesional - sensor de presion.\n");
+   uartConfig( UART_USED, 115200 );
 
 
-   adcConfig( ADC_ENABLE );
+	#ifndef SENSOR_TEST
+	adcConfig( ADC_ENABLE );
+	gpio_config();
+	#else
+	uartWriteString( UART_USED, "TP Profesional - sensor de presion.\n");
+	#endif
 
    /* Turn LED On to know the firmware is up and running */
    gpioWrite( LED3, ON );
 
-   gpio_config();
 
    xMeasurePressureQueue = xQueueCreate( 1, sizeof(int[2]) );
    xSetIndexQueue = xQueueCreate( 1, sizeof(int) );
@@ -49,19 +52,19 @@ int main(void){
    xTaskCreate(
 		   set_matrix_index,                  	// Function of the task to execute
      		( const char * )"set_matrix_index",	// Name of the task, as a user friendly string
-     		configMINIMAL_STACK_SIZE*2, // Stack quantity of the task
-     		0,                          // Task parameters
-     		tskIDLE_PRIORITY+1,         // Task priority
-     		&TaskHandle_set_matrix_index     						// Pointer to the task created in the system
+     		configMINIMAL_STACK_SIZE*2, 		// Stack quantity of the task
+     		0,                          		// Task parameters
+     		tskIDLE_PRIORITY+1,         		// Task priority
+     		&TaskHandle_set_matrix_index     	// Pointer to the task created in the system
      		);
 
    xTaskCreate(
 		get_pressure_value,                  	// Function of the task to execute
-		( const char * )"get_pressure_value",		// Name of the task, as a user friendly string
-		configMINIMAL_STACK_SIZE*2,   	// Stack quantity of the task
-		0,                            	// Task parameters
-		tskIDLE_PRIORITY+1,           	// Task priority
-		0                             	// Pointer to the task created in the system
+		( const char * )"get_pressure_value",	// Name of the task, as a user friendly string
+		configMINIMAL_STACK_SIZE*2,   			// Stack quantity of the task
+		0,                            			// Task parameters
+		tskIDLE_PRIORITY+1,           			// Task priority
+		0                             			// Pointer to the task created in the system
    );
 
 

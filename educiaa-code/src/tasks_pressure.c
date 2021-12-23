@@ -5,53 +5,10 @@
 #include "FreeRTOSConfig.h"
 #include "semphr.h"
 
-// ****************************
-// Sin PCB:
-/*
-const int demuxY0 = GPIO8;
-const int demuxY1 = GPIO7;
-const int demuxY2 = GPIO5;
-const int demuxY3 = GPIO3;
-const int demuxY4 = GPIO1;
-const int demuxY5 = LCD1;
-const int demuxY6 = LCD2;
-const int demuxY7 = LCD3;
-const int demuxY8 = LCDRS;
-const int demuxY9 = LCD4;
-const int demuxY10 = SPI_MISO;
-const int demuxY11 = ENET_TXD1;
-const int demuxY12 = ENET_TXD0;
-const int demuxY13 = ENET_MDIO;
-*/
-// ****************************
-
-
-const int demuxS0 = GPIO1;
-const int demuxS1 = GPIO3;
-const int demuxS2 = GPIO5;
-const int demuxS3 = GPIO7;
-const int demuxSIG = GPIO8;
-
-
-const int muxS0 = T_FIL0; // GPIO25
-const int muxS1 = T_FIL3; // GPIO28
-const int muxS2 = T_FIL2; // GPIO27
-const int muxS3 = T_COL0; //GPIO29
-const int muxSIG = CH3;
-
-
 QueueHandle_t xMeasurePressureQueue = NULL;
 QueueHandle_t xSetIndexQueue = NULL;
 QueueHandle_t xPrintQueue = NULL;
 TaskHandle_t TaskHandle_set_matrix_index;
-
-int sensor_value_test = 1;
-
-float time_diff;
-uint32_t Counter = 0;
-char * str_aux;
-uint32_t cyclesElapsed = 0;
-uint32_t msElapsed = 0, usElapsed = 0;
 
 void set_matrix_index( void* pvParameters )
 {
@@ -63,11 +20,7 @@ void set_matrix_index( void* pvParameters )
     int col = -1;
     int aux_queue;
     int index[2] = {row, col};
-
-
-    cyclesCounterConfig(EDU_CIAA_NXP_CLOCK_SPEED);
-    cyclesCounterReset();
-    // ---------- REPETIR POR SIEMPRE --------------------------
+    // ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
 	{
 		if(xQueueReceive( xSetIndexQueue, &( aux_queue ), ( TickType_t ) 10 ) == pdTRUE)
@@ -98,10 +51,9 @@ void get_pressure_value( void* pvParameters )
     int sensor_value = 0;
 	// ****************************
 	// Sin PCB:
-	// int sensor_in[MAX_ROW] = {demuxY0, demuxY1, demuxY2, demuxY3, demuxY4, demuxY5, demuxY6, demuxY7, demuxY8, demuxY9, demuxY10, demuxY11, demuxY12, demuxY13};
-	// ****************************
-
-	//int sensor_matrix[(MAX_ROW*2)-1][(MAX_COL*2)-1]={}; // Armo la matriz con los espacios para interpolar
+	#ifdef SENSOR
+	int sensor_in[MAX_ROW] = {demuxY0, demuxY1, demuxY2, demuxY3, demuxY4, demuxY5, demuxY6, demuxY7, demuxY8, demuxY9, demuxY10, demuxY11, demuxY12, demuxY13};
+	#endif
 
 	int row = 0;
 	int col = 1;
@@ -109,7 +61,7 @@ void get_pressure_value( void* pvParameters )
 	int i = 0;
 	int int_zero = 0;
 
-	// ---------- REPETIR POR SIEMPRE --------------------------
+	// ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
 	{
 		if(xQueueReceive( xMeasurePressureQueue, &( index ), ( TickType_t ) 10 ) == pdTRUE)
@@ -118,23 +70,16 @@ void get_pressure_value( void* pvParameters )
 			col= index[1];
 
 			// Finished to Read all matrix values:
-			//if (row >= ((MAX_ROW*2)-1))
 			if (row >= MAX_ROW)
 			{
-				// Time execution measurement:
-				cyclesElapsed = cyclesCounterRead();
-			   // Convierte el valor de ciclos en micro segundos
-			   usElapsed = cyclesCounterToUs(cyclesElapsed);
-			   // Imprime por pantalla el valor de los ciclos y los micro segundos transcurridos.
-			   stdioPrintf(UART_USB, "Los ciclos en esperar 3 ms son: %d. En micro segundos (aprox) %d\n\r", cyclesElapsed, usElapsed);
 
 				xTaskCreate(
-					print_matrix,                  		// Function of the task to execute
-					( const char * )"print_matrix", 	// Name of the task, as a user friendly string
-					configMINIMAL_STACK_SIZE*2,   		// Stack quantity of the task
-					0,                            		// Task parameters
-					tskIDLE_PRIORITY+1,           		// Task priority
-					0                             		// Pointer to the task created in the system
+					interpolate_matrix,                  	// Function of the task to execute
+					( const char * )"interpolate_matrix", 	// Name of the task, as a user friendly string
+					configMINIMAL_STACK_SIZE*2,   			// Stack quantity of the task
+					0,                            			// Task parameters
+					tskIDLE_PRIORITY+1,           			// Task priority
+					0                             			// Pointer to the task created in the system
 				);
 
 
@@ -142,44 +87,25 @@ void get_pressure_value( void* pvParameters )
 				vTaskDelete(NULL);
 			}
 
+			#ifdef SENSOR
+			gpioWrite( sensor_in[row], HIGH );
 
-			SetDeMuxChannel(row);
-			gpioWrite(demuxSIG, HIGH);
-			// ****************************
-			// Sin PCB:
-			//gpioWrite( sensor_in[row], HIGH );
-			// ****************************
-
-			SetMuxChannel(col);
-			//SetMuxChannel(index[1]);
-			// ****************************
-			// Sin PCB:
-			/*
 			gpioWrite( muxS0, col & 1 );
 			gpioWrite( muxS1, (col >> 1) & 1 );
 			gpioWrite( muxS2, (col >> 2) & 1 );
 			gpioWrite( muxS3, (col >> 3) & 1 );
-			*/
-			// ****************************
+
 			sensor_value = adcRead(muxSIG);
-			//sensor_matrix[row*2][col*2] = sensor_value;
+			gpioWrite( sensor_in[row], LOW );
+			#endif
 
+			#ifdef SENSOR_PCB
+			SetDeMuxChannel(row);
+			gpioWrite( demuxSIG, HIGH );
+			SetMuxChannel(col);
+			sensor_value = adcRead(muxSIG);
 			gpioWrite(demuxSIG, LOW);
-			// ****************************
-			// Sin PCB:
-			//gpioWrite( sensor_in[row], LOW );
-
-
-
-			// To test project, without connecting the sensor matrix.
-/*
-			sensor_matrix[row][col] = sensor_value_test;
-			sensor_value_test ++;
-			if (sensor_value_test > 14)
-			{
-				sensor_value_test = 1;
-			}
-*/
+			#endif
 
 			if (col != MAX_COL-1)
 			{
@@ -193,10 +119,154 @@ void get_pressure_value( void* pvParameters )
 					{
 						xQueueSendToBack( xPrintQueue, ( void * ) &int_zero, ( TickType_t ) 10 ); // Row for interpolation
 					}
+					#ifdef SENSOR_TEST
+					sensor_value = 7;
+					#endif
 				}
 			}
 
+			#ifdef SENSOR_TEST
+			sensor_value++;
+			#endif
+
 			xQueueSend( xSetIndexQueue, ( void * ) &row, ( TickType_t ) 0 );
+		}
+	}
+}
+
+
+void interpolate_matrix( void* pvParameters)
+{
+	TickType_t xPeriodicity =  1000 / portTICK_RATE_MS;
+	TickType_t xLastWakeTime = xTaskGetTickCount();
+
+	int row = 0;
+	int col = 0;
+
+	int aux_array_a[(MAX_COL*2)-1] = {};
+	int aux_array_b[(MAX_COL*2)-1] = {};
+	int aux_array_c[(MAX_COL*2)-1] = {};
+
+	bool_t interpol = false;
+
+	int i = 0;
+	int val;
+
+	// ---------- REPEAT FOR EVER --------------------------
+	while( TRUE )
+	{
+		// First row of matrix:
+		if (row == 0)
+		{
+			xQueueReceive( xPrintQueue, &( val ), ( TickType_t ) 10 );
+			aux_array_a[col] = val;
+			col ++;
+			if (col == ((MAX_COL*2)-1))
+			{
+				row = 1;
+				col = 0;
+			}
+		} else{ // Other rows
+
+			// Get row values:
+			if (interpol == false)
+			{
+				if (row % 2 == 0 ) // # Measurement row
+				{
+					xQueueReceive( xPrintQueue, &( val ), ( TickType_t ) 10 );
+					aux_array_b[col] = val;
+					col ++;
+					if (col == ((MAX_COL*2)-1))
+					{
+						interpol = true;
+						row ++;
+						col = 0;
+					}
+
+				}else{ // Zeros row
+					xQueueReceive( xPrintQueue, &( val ), ( TickType_t ) 10 );
+					aux_array_c[col] = val;
+					col ++;
+					if (col == ((MAX_COL*2)-1))
+					{
+						row ++;
+						col = 0;
+					}
+				}
+			}else{ //Calculate interpolation
+
+				i = 0;
+				while(i != MAX_COL-1)
+				{
+					// Interpolation 1:
+					aux_array_c[(i*2)+1] = (aux_array_a[i*2] + aux_array_a[(i*2)+2] + aux_array_b[i*2] + aux_array_b[(i*2)+2])/4;
+
+					// Interpolation 2:
+					if (i != 0){
+                    	aux_array_c[(i*2)] = (aux_array_a[i*2] + aux_array_b[i*2] + aux_array_c[(i*2)+1] + aux_array_c[(i*2)])/4;
+					}else{
+                    	// First col:
+                    	aux_array_c[(i*2)] = (aux_array_a[i*2] + aux_array_b[i*2] + aux_array_c[(i*2)+1] )/3;}
+
+					if (row != 3){
+                    	aux_array_a[(i*2)+1] = (aux_array_a[i*2] + aux_array_a[(i*2)+2] + aux_array_c[(i*2)+1] + aux_array_a[(i*2)+1])/4;
+					}else{
+						// First row:
+						aux_array_a[(i*2)+1] = (aux_array_a[i*2] + aux_array_a[(i*2)+2] + aux_array_c[(i*2)+1])/3;}
+
+					if (row != (MAX_ROW*2)-1 ){
+						aux_array_b[(i*2)+1] = aux_array_c[(i*2)+1];
+					}else{
+						// Last row:
+						aux_array_b[(i*2)+1] = (aux_array_b[(i*2)] + aux_array_b[(i*2)+2] + aux_array_c[(i*2)+1])/3;}
+
+					if (i != (MAX_COL -2)){
+						// Set for next iteration:
+						aux_array_c[(i*2)+2] = aux_array_c[(i*2)+1];
+					}else{
+						// Last col:
+						aux_array_c[(i*2)+2] = (aux_array_a[(i*2)+2] + aux_array_b[(i*2)+2] + aux_array_c[(i*2)+1])/3;}
+
+					i++;
+				}
+
+				// Enqueue again:
+				i = 0;
+				for (i = 0; i < ((MAX_COL*2)-1); i++)
+				{
+					xQueueSend( xPrintQueue, ( void * ) &aux_array_a[i], ( TickType_t ) 0 );
+				}
+
+				for (i = 0; i < ((MAX_COL*2)-1); i++)
+				{
+					xQueueSend( xPrintQueue, ( void * ) &aux_array_c[i], ( TickType_t ) 0 );
+				}
+
+				for (i = 0; i < (sizeof(aux_array_a)/sizeof(aux_array_a[0])); i++)
+				{
+					aux_array_a[i] = aux_array_b[i];
+				}
+
+				interpol = false;
+				if (row == ((MAX_COL*2)-1))
+				{
+					for (i = 0; i < ((MAX_COL*2)-1); i++)
+					{
+						xQueueSend( xPrintQueue, ( void * ) &aux_array_b[i], ( TickType_t ) 0 );
+					}
+
+					xTaskCreate(
+							print_matrix,                  	// Function of the task to execute
+						( const char * )"print_matrix", 	// Name of the task, as a user friendly string
+						configMINIMAL_STACK_SIZE*2,   		// Stack quantity of the task
+						0,                            		// Task parameters
+						tskIDLE_PRIORITY+1,           		// Task priority
+						0                          			// Pointer to the task created in the system
+					);
+
+					vTaskDelete(NULL);
+				}
+			}
 		}
 	}
 }
@@ -208,32 +278,32 @@ void print_matrix( void* pvParameters )
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 
 	int row_value;
-	int sensor_test;
+	int matrix_val;
 	int row=0, col=0;
 
-	stdioPrintf(UART_USB, "[");
-	// ---------- REPETIR POR SIEMPRE --------------------------
+	stdioPrintf(UART_USED, "[");
+	// ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
 	{
 
-		if(xQueueReceive( xPrintQueue, &( sensor_test ), ( TickType_t ) 10 ) == pdTRUE) // Dequeue matrix data
+		if(xQueueReceive( xPrintQueue, &( matrix_val ), ( TickType_t ) 10 ) == pdTRUE) // Dequeue matrix data
 		{
 			if (col < ((MAX_COL*2)-2))
 			{
-				stdioPrintf(UART_USB, "%d,", sensor_test);
+				stdioPrintf(UART_USED, "%d,", matrix_val);
 				col++;
 			}else{
 				col = 0;
 				row++;
 				if (row < ((MAX_ROW*2)-1))
 				{
-					stdioPrintf(UART_USB, "%d;\n", sensor_test);
+					stdioPrintf(UART_USED, "%d;\n", matrix_val);
 				}else{
-					stdioPrintf(UART_USB, "%d", sensor_test);
+					stdioPrintf(UART_USED, "%d", matrix_val);
 				}
 			}
 		}else{
-			stdioPrintf(UART_USB, "]\n\n");
+			stdioPrintf(UART_USED, "]\n\n");
 
 			xTaskCreate(
 				set_matrix_index,                  		// Function of the task to execute
@@ -260,7 +330,7 @@ void print_matrix( void* pvParameters )
 	}
 }
 
-
+#ifndef SENSOR_TEST
 void SetMuxChannel(int channel)
 {
 	gpioWrite( muxS0, channel & 1 );
@@ -269,7 +339,6 @@ void SetMuxChannel(int channel)
 	gpioWrite( muxS3, (channel >> 3) & 1 );
 }
 
-
 void SetDeMuxChannel(int channel)
 {
 	gpioWrite( demuxS0, channel & 1 );
@@ -277,6 +346,7 @@ void SetDeMuxChannel(int channel)
 	gpioWrite( demuxS2, (channel >> 2) & 1 );
 	gpioWrite( demuxS3, (channel >> 3) & 1 );
 }
+#endif
 
 /*==================[end of file]============================================*/
 
