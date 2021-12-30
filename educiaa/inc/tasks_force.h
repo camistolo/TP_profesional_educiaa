@@ -22,13 +22,16 @@
 #define DataPin 	ENET_TXEN
 #define ClockPin 	ENET_RXD1
 
-//Constantes de los sensores de fuerza
-#define SCALE			17000//15500//17110
+// Constantes de los sensores de fuerza
+#define SCALE			17000
 #define GAIN_128		24
 #define GAIN_64			25
 #define GAIN_32			26
 #define XOR_VALUE 		0x800000
-#define AVERAGE_N	15
+#define AVERAGE_N		20
+
+// Cantidad de mediciones tomadas durante el salto
+#define JUMP_N		200
 
 // Constantes de la periodicidad de las tareas
 #define TASK_RATE_1000_MS	1000
@@ -61,13 +64,21 @@
 
 /*==================[declaraciones de funciones externas]====================*/
 
-TickType_t get_diff();
-void clear_diff();
+struct jump_parameters {
+	double vel;
+	double t;
+	double height;
+	double power;
+};
+
+//TickType_t get_diff();
+//void clear_diff();
 
 // Prototipo de funcion de la tarea
 void task_measure_force( void* taskParmPtr );
 void task_hx711_ready( void* taskParmPtr );
 void task_average_force( void* taskParmPtr );
+void task_median_force( void* taskParmPtr );
 void task_tare( void* taskParmPtr );
 void task_weight( void* taskParmPtr );
 void task_jump( void* taskParmPtr );

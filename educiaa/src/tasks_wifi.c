@@ -111,10 +111,6 @@ void task_receive_wifi( void* pvParameters )
 				/* incremento el indice */
 				index++;
 
-				uartWriteString(UART_USB, "Received: ");
-				//uartWriteByte(UART_USB, message_buffer);
-				uartWriteString(UART_USB, "\n");
-
 				create_task(task_choose_measurement,"task_choose_measurement",SIZE,0,1,NULL);
 				xQueueSend(queue_command_wifi , &message_buffer,  portMAX_DELAY);
 
@@ -155,32 +151,20 @@ void task_choose_measurement( void* pvParameters )
 
 	measurement_type_t meas_type;
 
-	uartWriteString(UART_USB, "command: ");
 	// ---------- REPETIR POR SIEMPRE --------------------------
 	while( TRUE )
 	{
 		if(xQueueReceive(queue_command_wifi , &meas_type,  portMAX_DELAY))
 		{
-			uartWriteByte(UART_USB, meas_type);
-			uartWriteString(UART_USB,"\n");
 			switch (meas_type) {
-				case 49:
-					uartWriteString(UART_USB, "49");
-					break;
 				case WEIGHT_MEAS:
 					// Activate weight measurement task
-					//xSemaphoreTake( xSemaphoreMeasureWeight, ( TickType_t ) 0 );
-					//xSemaphoreGive( xSemaphoreMeasureWeight);
-					uartWriteString( UART_USB, "Weight\n");
-//					uartWriteString( UART_USED, ">155<");
 					create_task(task_weight,"task_weight",SIZE,0,1,NULL);
 					break;
 				case FORCE_MEAS:
 					// Activate force measurement task
-					uartWriteString( UART_USB, "Force\n");
 					create_task(task_jump,"task_jump",SIZE,0,1,NULL);
 					break;
-
 				case PRESSURE_MEAS:
 					// Activate pressure measurement task
 					uartWriteString( UART_USB, "Pressure\n");

@@ -42,7 +42,7 @@ int main( void )
     // Creación de las colas
     create_queue(&queue_force,1,sizeof(unsigned long));
     create_queue(&queue_force_average,1,sizeof(unsigned long));
-    create_queue(&queue_jump,1,sizeof(double));
+    create_queue(&queue_jump,1,JUMP_N*sizeof(unsigned long));
     create_queue(&queue_command_wifi,1,sizeof(int));
 
     // Creación del semáforo
