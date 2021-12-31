@@ -51,6 +51,7 @@
 
 void set_matrix_index( void* pvParameters );
 void get_pressure_value( void* pvParameters );
+void calculate_arrays( void* pvParameters);
 void interpolate_matrix( void* pvParameters);
 void print_matrix( void* pvParameters );
 
