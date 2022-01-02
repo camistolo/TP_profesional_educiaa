@@ -9,7 +9,8 @@
 //#define SENSOR_PCB	// To test the sensor with PCB.
 
 #ifdef SENSOR_TEST
-#define UART_USED UART_USB
+//#define UART_USED UART_USB
+#define UART_USED UART_232
 #endif
 
 #ifdef SENSOR
@@ -51,8 +52,6 @@
 
 void set_matrix_index( void* pvParameters );
 void get_pressure_value( void* pvParameters );
-void calculate_arrays( void* pvParameters);
-void interpolate_matrix( void* pvParameters);
 void print_matrix( void* pvParameters );
 
 #ifndef SENSOR_TEST

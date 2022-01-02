@@ -44,7 +44,7 @@ int main(void){
 
    xMeasurePressureQueue = xQueueCreate( 1, sizeof(int[2]) );
    xSetIndexQueue = xQueueCreate( 1, sizeof(int) );
-   xPrintQueue = xQueueCreate( 729, sizeof(int) ); // ((MAX_ROW*2)-1) * ((MAX_COL*2)-1) = 729
+   xPrintQueue = xQueueCreate( 196, sizeof(int) ); // MAX_ROW * MAX_COL = 729
 
    int aux = 0;
    xQueueSend( xSetIndexQueue, ( void * ) &aux, ( TickType_t ) 0 );

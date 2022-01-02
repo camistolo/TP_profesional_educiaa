@@ -73,21 +73,16 @@ void get_pressure_value( void* pvParameters )
 			col= index[1];
 
 			// Finished to Read all matrix values:
-			if (row >= MAX_ROW)
+			if (row == MAX_ROW)
 			{
-				stdioPrintf(UART_USED, "calculate_arrays create task\n");
-
 				xTaskCreate(
-					calculate_arrays,                  		// Function of the task to execute
-					( const char * )"calculate_arrays", 	// Name of the task, as a user friendly string
-					configMINIMAL_STACK_SIZE*2,   			// Stack quantity of the task
-					0,                            			// Task parameters
-					tskIDLE_PRIORITY+1,           			// Task priority
-					0                             			// Pointer to the task created in the system
+					print_matrix,					// Function of the task to execute
+					( const char * )"print_matrix", // Name of the task, as a user friendly string
+					configMINIMAL_STACK_SIZE*2,   	// Stack quantity of the task
+					0,                            	// Task parameters
+					tskIDLE_PRIORITY+1,           	// Task priority
+					0                             	// Pointer to the task created in the system
 				);
-
-				row = 0;
-				xQueueSend( xSetIndexQueue, ( void * ) &row, ( TickType_t ) 0 );
 
 				vTaskDelete(TaskHandle_set_matrix_index);
 				vTaskDelete(NULL);
@@ -113,217 +108,21 @@ void get_pressure_value( void* pvParameters )
 			gpioWrite(demuxSIG, LOW);
 			#endif
 
-			if (col != MAX_COL-1)
-			{
-				xQueueSendToBack( xPrintQueue, ( void * ) &sensor_value, ( TickType_t ) 10 ); // Enqueue matrix data
-				xQueueSendToBack( xPrintQueue, ( void * ) &int_zero, ( TickType_t ) 10 );
-			}else{
-				xQueueSendToBack( xPrintQueue, ( void * ) &sensor_value, ( TickType_t ) 10 );
-				if(row != MAX_ROW-1)
-				{
-					for( i = 0; i < ((MAX_COL*2)-1); i++)
-					{
-						xQueueSendToBack( xPrintQueue, ( void * ) &int_zero, ( TickType_t ) 10 ); // Row for interpolation
-					}
-					#ifdef SENSOR_TEST
-					sensor_value = 5;
-					#endif
-				}
-			}
+			xQueueSendToBack( xPrintQueue, ( void * ) &sensor_value, ( TickType_t ) 10 ); // Enqueue matrix data
 
 			#ifdef SENSOR_TEST
 			sensor_value++;
+			if (col == MAX_COL-1)
+			{
+				sensor_value = 1;
+			}
+
 			#endif
 
 			xQueueSend( xSetIndexQueue, ( void * ) &row, ( TickType_t ) 0 );
 		}
 	}
 }
-
-void calculate_arrays( void* pvParameters)
-{
-	TickType_t xPeriodicity =  1000 / portTICK_RATE_MS;
-	TickType_t xLastWakeTime = xTaskGetTickCount();
-
-	int row;
-	int col = 0;
-	int index[2];
-
-	bool_t interpol = false;
-
-	int i = 0;
-	int val;
-
-	// ---------- REPEAT FOR EVER --------------------------
-	while( TRUE )
-	{
-		if(xQueueReceive( xSetIndexQueue, &( row ), ( TickType_t ) 10 ) == pdTRUE)
-		{
-			//Get row
-		}
-
-		// First row of matrix:
-		if (row == 0)
-		{
-			xQueueReceive( xPrintQueue, &( val ), ( TickType_t ) 10 );
-			aux_array_a[col] = val;
-			col ++;
-			if (col == ((MAX_COL*2)-1))
-			{
-				row = 1;
-				col = 0;
-			}
-		} else{ // Other rows
-
-			// Get row values:
-			if (row % 2 == 0 ) // # Measurement row
-			{
-				xQueueReceive( xPrintQueue, &( val ), ( TickType_t ) 10 );
-				aux_array_b[col] = val;
-				col ++;
-				if (col == ((MAX_COL*2)-1))
-				{
-
-					xTaskCreate(
-						interpolate_matrix,                  	// Function of the task to execute
-						( const char * )"interpolate_matrix", 	// Name of the task, as a user friendly string
-						configMINIMAL_STACK_SIZE*2,   			// Stack quantity of the task
-						0,                            			// Task parameters
-						tskIDLE_PRIORITY+1,           			// Task priority
-						0                             			// Pointer to the task created in the system
-					);
-
-					row ++;
-					xQueueSend( xSetIndexQueue, ( void * ) &row, ( TickType_t ) 0 );
-					vTaskDelete(NULL);
-				}
-
-			}else{ // Zeros row
-				xQueueReceive( xPrintQueue, &( val ), ( TickType_t ) 10 );
-				aux_array_c[col] = val;
-				col ++;
-				if (col == ((MAX_COL*2)-1))
-				{
-					row ++;
-					col = 0;
-				}
-			}
-		}
-	}
-}
-
-void interpolate_matrix( void* pvParameters)
-{
-	TickType_t xPeriodicity =  1000 / portTICK_RATE_MS;
-	TickType_t xLastWakeTime = xTaskGetTickCount();
-
-	int row = 0;
-	int col = 0;
-
-	bool_t interpol = false;
-
-	int i = 0;
-	int j = 0;
-	int val;
-
-	stdioPrintf(UART_USED, "interpolate_matrix\n");
-
-	// ---------- REPEAT FOR EVER --------------------------
-	while( TRUE )
-	{
-
-		if(xQueueReceive( xSetIndexQueue, &( row ), ( TickType_t ) 10 ) == pdTRUE)
-		{
-			// Get row value
-		}
-
-		// Interpolation 1:
-		aux_array_c[(i*2)+1] = (aux_array_a[i*2] + aux_array_a[(i*2)+2] + aux_array_b[i*2] + aux_array_b[(i*2)+2])/4;
-
-		// Interpolation 2:
-		if (i != 0){
-			aux_array_c[(i*2)] = (aux_array_a[i*2] + aux_array_b[i*2] + aux_array_c[(i*2)+1] + aux_array_c[(i*2)])/4;
-		}else{
-			// First col:
-			aux_array_c[(i*2)] = (aux_array_a[i*2] + aux_array_b[i*2] + aux_array_c[(i*2)+1] )/3;}
-
-		if (row != 3){
-			aux_array_a[(i*2)+1] = (aux_array_a[i*2] + aux_array_a[(i*2)+2] + aux_array_c[(i*2)+1] + aux_array_a[(i*2)+1])/4;
-		}else{
-			// First row:
-			aux_array_a[(i*2)+1] = (aux_array_a[i*2] + aux_array_a[(i*2)+2] + aux_array_c[(i*2)+1])/3;}
-
-		if (row != (MAX_ROW*2)-1 ){
-			aux_array_b[(i*2)+1] = aux_array_c[(i*2)+1];
-		}else{
-			// Last row:
-			aux_array_b[(i*2)+1] = (aux_array_b[(i*2)] + aux_array_b[(i*2)+2] + aux_array_c[(i*2)+1])/3;}
-
-		if (i != (MAX_COL -2)){
-			// Set for next iteration:
-			aux_array_c[(i*2)+2] = aux_array_c[(i*2)+1];
-		}else{
-			// Last col:
-			aux_array_c[(i*2)+2] = (aux_array_a[(i*2)+2] + aux_array_b[(i*2)+2] + aux_array_c[(i*2)+1])/3;}
-
-		i++;
-
-		if (i == MAX_COL-1)
-		{
-			// Enqueue array a:
-			for (j = 0; j < ((MAX_COL*2)-1); j++)
-			{
-				xQueueSendToBack( xPrintQueue, ( void * ) &aux_array_a[j], ( TickType_t ) 10 ); // Enqueue matrix data
-			}
-
-			// Enqueue array a:
-			for (j = 0; j < ((MAX_COL*2)-1); j++)
-			{
-				xQueueSendToBack( xPrintQueue, ( void * ) &aux_array_c[j], ( TickType_t ) 10 );
-			}
-
-			// Copy array b to a:
-			for (j = 0; j < (sizeof(aux_array_a)/sizeof(aux_array_a[0])); j++)
-			{
-				aux_array_a[j] = aux_array_b[j];
-			}
-
-			interpol = false;
-			if (row == ((MAX_COL*2)-1))
-			{
-				for (j = 0; j < ((MAX_COL*2)-1); j++)
-				{
-					xQueueSendToBack( xPrintQueue, ( void * ) &aux_array_b[j], ( TickType_t ) 10 );
-				}
-
-				xTaskCreate(
-						print_matrix,                  	// Function of the task to execute
-					( const char * )"print_matrix", 	// Name of the task, as a user friendly string
-					configMINIMAL_STACK_SIZE*2,   		// Stack quantity of the task
-					0,                            		// Task parameters
-					tskIDLE_PRIORITY+1,           		// Task priority
-					0                          			// Pointer to the task created in the system
-				);
-
-				vTaskDelete(NULL);
-			}
-
-			xTaskCreate(
-				calculate_arrays,                  	// Function of the task to execute
-				( const char * )"calculate_arrays", // Name of the task, as a user friendly string
-				configMINIMAL_STACK_SIZE*2,   		// Stack quantity of the task
-				0,                            		// Task parameters
-				tskIDLE_PRIORITY+1,           		// Task priority
-				0                          			// Pointer to the task created in the system
-			);
-
-			xQueueSend( xSetIndexQueue, ( void * ) &row, ( TickType_t ) 0 );
-			vTaskDelete(NULL);
-
-		}
-	}
-}
-
 
 void print_matrix( void* pvParameters )
 {
@@ -334,36 +133,40 @@ void print_matrix( void* pvParameters )
 	int matrix_val;
 	int row=0, col=0;
 
-	stdioPrintf(UART_USED, "print_matrix\n");
+	char buffer[700];
 
-	stdioPrintf(UART_USED, ">[");
+	stdioPrintf(UART_USED, ">3["); // 3 to indicate pressure measurement.
+	//sprintf(buffer, ">[");
 	// ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
 	{
 
 		if(xQueueReceive( xPrintQueue, &( matrix_val ), ( TickType_t ) 10 ) == pdTRUE) // Dequeue matrix data
 		{
-			if (col < ((MAX_COL*2)-2))
+			if (col < (MAX_COL-1))
 			{
 				stdioPrintf(UART_USED, "%d,", matrix_val);
+				//sprintf(buffer, "%s%d,", buffer, matrix_val);
 				col++;
 			}else{
 				col = 0;
 				row++;
-				if (row < ((MAX_ROW*2)-1))
+				if (row < MAX_ROW)
 				{
-					#ifdef SENSOR_TEST
-					stdioPrintf(UART_USED, "%d;\n", matrix_val);
-					#else
-					stdioPrintf(UART_USED, "%d;", matrix_val);
-					#endif
+					stdioPrintf(UART_USED, "%d;", matrix_val);//stdioPrintf(UART_USED, "%d;\n", matrix_val);
+					//sprintf(buffer, "%s%d;", buffer, matrix_val);
 				}else{
 					stdioPrintf(UART_USED, "%d", matrix_val);
+					//sprintf(buffer, "%s%d", buffer, matrix_val);
 				}
 			}
 		}else{
 			stdioPrintf(UART_USED, "]<\n");
+			//sprintf(buffer, "%s]<\n", buffer);
 
+			//stdioPrintf(UART_USED, "%s", buffer);
+
+/*
 			xTaskCreate(
 				set_matrix_index,                  		// Function of the task to execute
 				( const char * )"set_matrix_index",		// Name of the task, as a user friendly string
@@ -384,8 +187,8 @@ void print_matrix( void* pvParameters )
 
 		   row = 0;
 		   xQueueSend( xSetIndexQueue, ( void * ) &row, ( TickType_t ) 0 );
-
-			vTaskDelete(NULL);
+*/
+		   vTaskDelete(NULL);
 		}
 	}
 }
