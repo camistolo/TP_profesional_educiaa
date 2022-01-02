@@ -1,12 +1,18 @@
-#ifndef TASKS_H
-#define TASKS_H
+#ifndef TASKS_PRESSURE_H
+#define TASKS_PRESSURE_H
+
+#include "FreeRTOS.h"
+#include "task.h"
+#include "sapi.h"
+#include "FreeRTOSConfig.h"
+#include "semphr.h"
 
 #define MAX_COL 14
 #define MAX_ROW 14
 
-#define SENSOR_TEST 		// To test without sensor.
+//#define SENSOR_TEST 		// To test without sensor.
 //#define SENSOR		// To test with sensor, but without PCB.
-//#define SENSOR_PCB	// To test the sensor with PCB.
+#define SENSOR_PCB	// To test the sensor with PCB.
 
 #ifdef SENSOR_TEST
 //#define UART_USED UART_USB
@@ -39,7 +45,7 @@
 #define demuxS3 GPIO7
 #define demuxSIG GPIO8
 
-#define UART_USED UART_232
+#define UART_USED UART_USB
 #endif
 
 
@@ -59,4 +65,4 @@ void SetMuxChannel(int channel);
 void SetDeMuxChannel(int channel);
 #endif
 
-#endif //TASKS_H
+#endif //TASKS_PRESSURE_H

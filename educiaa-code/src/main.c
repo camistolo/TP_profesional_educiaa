@@ -14,8 +14,9 @@
 #define SAPI_USE_INTERRUPTS
 
 extern QueueHandle_t xMeasurePressureQueue;
-extern QueueHandle_t xSetIndexQueue;
+//extern QueueHandle_t xSetIndexQueue;
 extern QueueHandle_t xPrintQueue;
+extern SemaphoreHandle_t sem_pressure_index;
 extern TaskHandle_t TaskHandle_set_matrix_index;
 
 /*==================[internal functions definition]==========================*/
@@ -43,11 +44,14 @@ int main(void){
 
 
    xMeasurePressureQueue = xQueueCreate( 1, sizeof(int[2]) );
-   xSetIndexQueue = xQueueCreate( 1, sizeof(int) );
+//   xSetIndexQueue = xQueueCreate( 1, sizeof(int) );
    xPrintQueue = xQueueCreate( 196, sizeof(int) ); // MAX_ROW * MAX_COL = 729
+   sem_pressure_index = xSemaphoreCreateBinary();
 
-   int aux = 0;
-   xQueueSend( xSetIndexQueue, ( void * ) &aux, ( TickType_t ) 0 );
+//   int aux = 0;
+//   xQueueSend( xSetIndexQueue, ( void * ) &aux, ( TickType_t ) 0 );
+
+   xSemaphoreGive(sem_pressure_index);
 
    xTaskCreate(
 		   set_matrix_index,                  	// Function of the task to execute

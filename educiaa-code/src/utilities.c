@@ -1,6 +1,4 @@
 #include "utilities.h"
-#include "sapi.h"
-#include "tasks_pressure.h"
 
 // ****************************
 // Sin PCB:

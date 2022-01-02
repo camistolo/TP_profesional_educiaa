@@ -1,13 +1,9 @@
 #include "tasks_pressure.h"
-#include "FreeRTOS.h"
-#include "task.h"
-#include "sapi.h"
-#include "FreeRTOSConfig.h"
-#include "semphr.h"
 
-QueueHandle_t xMeasurePressureQueue = NULL;
-QueueHandle_t xSetIndexQueue = NULL;
-QueueHandle_t xPrintQueue = NULL;
+QueueHandle_t xMeasurePressureQueue;
+//QueueHandle_t xSetIndexQueue;
+QueueHandle_t xPrintQueue;
+SemaphoreHandle_t sem_pressure_index;
 TaskHandle_t TaskHandle_set_matrix_index;
 
 int aux_array_a[(MAX_COL*2)-1] = {};
@@ -27,7 +23,8 @@ void set_matrix_index( void* pvParameters )
     // ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
 	{
-		if(xQueueReceive( xSetIndexQueue, &( row ), ( TickType_t ) 10 ) == pdTRUE)
+//		if(xQueueReceive( xSetIndexQueue, &( row ), ( TickType_t ) 10 ) == pdTRUE)
+		if (xSemaphoreTake(sem_pressure_index, portMAX_DELAY))
 		{
 			if(col < MAX_COL-1)
 			{
@@ -40,7 +37,7 @@ void set_matrix_index( void* pvParameters )
 			index[0] = row;
 			index[1] = col;
 
-			xQueueSend( xMeasurePressureQueue, ( void * ) &index, ( TickType_t ) 0 );
+			xQueueSend( xMeasurePressureQueue, ( void * ) &index, portMAX_DELAY );
 		}
 	}
 }
@@ -67,7 +64,7 @@ void get_pressure_value( void* pvParameters )
 	// ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
 	{
-		if(xQueueReceive( xMeasurePressureQueue, &( index ), ( TickType_t ) 10 ) == pdTRUE)
+		if(xQueueReceive( xMeasurePressureQueue, &( index ), portMAX_DELAY))
 		{
 			row = index[0];
 			col= index[1];
@@ -108,7 +105,7 @@ void get_pressure_value( void* pvParameters )
 			gpioWrite(demuxSIG, LOW);
 			#endif
 
-			xQueueSendToBack( xPrintQueue, ( void * ) &sensor_value, ( TickType_t ) 10 ); // Enqueue matrix data
+			xQueueSendToBack( xPrintQueue, ( void * ) &sensor_value, portMAX_DELAY ); // Enqueue matrix data
 
 			#ifdef SENSOR_TEST
 			sensor_value++;
@@ -119,7 +116,7 @@ void get_pressure_value( void* pvParameters )
 
 			#endif
 
-			xQueueSend( xSetIndexQueue, ( void * ) &row, ( TickType_t ) 0 );
+			xSemaphoreGive(sem_pressure_index);
 		}
 	}
 }
@@ -141,7 +138,7 @@ void print_matrix( void* pvParameters )
 	while( TRUE )
 	{
 
-		if(xQueueReceive( xPrintQueue, &( matrix_val ), ( TickType_t ) 10 ) == pdTRUE) // Dequeue matrix data
+		if(xQueueReceive( xPrintQueue, &( matrix_val ), portMAX_DELAY)) // Dequeue matrix data
 		{
 			if (col < (MAX_COL-1))
 			{
