@@ -1,6 +1,6 @@
 /*===========================================================================*/
-#ifndef _TASKS_FORCE_H_
-#define _TASKS_FORCE_H_
+#ifndef _TASKS_MEASUREMENTS_H_
+#define _TASKS_MEASUREMENTS_H_
 
 /*==================[inclusiones]============================================*/
 
@@ -13,17 +13,9 @@
 #include "auxs.h"
 #include "tasks_wifi.h"
 #include "tasks_pressure.h"
-#include <stdlib.h>
+#include "tasks_force.h"
 
 /*==================[definiciones y macros]==================================*/
-
-
-// Modo de medicion
-typedef enum {
-	AVERAGE_MODE,
-	SIMPLE_MODE
-} measurement_mode_t;
-
 // Constantes de la comunicacion
 #define BAUD_RATE 115200
 #define UART UART_232
@@ -74,27 +66,13 @@ typedef enum {
 
 /*==================[declaraciones de funciones externas]====================*/
 
-struct jump_parameters {
-	double vel;
-	double t;
-	double height;
-	double power;
-};
-
 //TickType_t get_diff();
 //void clear_diff();
 
 // Prototipo de funcion de la tarea
-void task_measure_force( void* taskParmPtr );
-void task_hx711_ready( void* taskParmPtr );
-void task_average_force( void* taskParmPtr );
-void task_median_force( void* taskParmPtr );
-void task_tare( void* taskParmPtr );
-void task_weight( void* taskParmPtr );
-void task_jump( void* taskParmPtr );
-void task_jump_parameters( void* taskParmPtr );
+void task_measurements( void* taskParmPtr );
 
 /*==================[funcion principal]======================================*/
 
 
-#endif /* _TASKS_FORCE_H_ */
+#endif /* _TASKS_MEASUREMENTS_H_ */

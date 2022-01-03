@@ -48,3 +48,37 @@ void create_mutex(SemaphoreHandle_t *mutex_name){
 	*mutex_name =  xSemaphoreCreateMutex();
 	configASSERT(mutex_name != NULL);
 }
+
+void gpio_config(void)
+{
+
+	#ifdef SENSOR
+	gpioInit(demuxY0, GPIO_OUTPUT);
+	gpioInit(demuxY1, GPIO_OUTPUT);
+	gpioInit(demuxY2, GPIO_OUTPUT);
+	gpioInit(demuxY3, GPIO_OUTPUT);
+	gpioInit(demuxY4, GPIO_OUTPUT);
+	gpioInit(demuxY5, GPIO_OUTPUT);
+	gpioInit(demuxY6, GPIO_OUTPUT);
+	gpioInit(demuxY7, GPIO_OUTPUT);
+	gpioInit(demuxY8, GPIO_OUTPUT);
+	gpioInit(demuxY9, GPIO_OUTPUT);
+	gpioInit(demuxY10, GPIO_OUTPUT);
+	gpioInit(demuxY11, GPIO_OUTPUT);
+	gpioInit(demuxY12, GPIO_OUTPUT);
+	gpioInit(demuxY13, GPIO_OUTPUT);
+	#endif
+
+	#ifdef SENSOR_PCB
+	gpioInit(demuxS0, GPIO_OUTPUT);
+	gpioInit(demuxS1, GPIO_OUTPUT);
+	gpioInit(demuxS2, GPIO_OUTPUT);
+	gpioInit(demuxS3, GPIO_OUTPUT);
+	gpioInit(demuxSIG, GPIO_OUTPUT);
+	#endif
+
+   gpioInit(muxS0, GPIO_OUTPUT);
+   gpioInit(muxS1, GPIO_OUTPUT);
+   gpioInit(muxS2, GPIO_OUTPUT);
+   gpioInit(muxS3, GPIO_OUTPUT);
+}

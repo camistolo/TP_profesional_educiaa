@@ -1,5 +1,4 @@
 #include "tasks_force.h"
-#include <stdlib.h>
 
 DEBUG_PRINT_ENABLE;
 
@@ -8,6 +7,8 @@ QueueHandle_t queue_force;
 QueueHandle_t queue_force_average;
 QueueHandle_t queue_jump;
 SemaphoreHandle_t sem_measure_force;
+
+extern SemaphoreHandle_t sem_pressure_index;
 
 extern void format( float valor, char *dst, uint8_t pos );
 /*==================[definiciones de datos internos]=========================*/
@@ -42,14 +43,6 @@ struct platformMeasurements{
 	float rightPressure[24][14]; //memset(arr, 0, sizeof arr);
 	float leftPressure[24][14]; //memset(arr, 0, sizeof arr);
 } platformMeasurements_t;*/
-
-
-
-// Modo de medicion
-typedef enum {
-	AVERAGE_MODE,
-	SIMPLE_MODE
-} measurement_mode_t;
 
 // Handles de las tareas
 TaskHandle_t TaskHandle_hx711_ready;
@@ -435,6 +428,8 @@ void task_jump( void* taskParmPtr )
 				xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
 				vTaskDelete(NULL);
 			}
+
+			xSemaphoreGive( sem_pressure_index );
 
 			jump_values[i++] = f;
 			sprintf(fl_str_aux, "%lu \r\n", f);

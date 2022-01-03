@@ -14,6 +14,7 @@
 #include "sapi.h"
 #include "semphr.h"
 #include "tasks_force.h"
+#include "tasks_pressure.h"
 
 #include <string.h>
 #include "FreeRTOSConfig.h"
@@ -34,5 +35,7 @@ void create_task(TaskFunction_t task, const char * const name, uint8_t stack,voi
 void create_queue(QueueHandle_t *q_name,UBaseType_t q_length,UBaseType_t q_scale);
 void create_semaphore(SemaphoreHandle_t *sem_name);
 void create_mutex(SemaphoreHandle_t *mutex_name);
+
+void gpio_config(void);
 
 #endif /* _AUXS_H_ */

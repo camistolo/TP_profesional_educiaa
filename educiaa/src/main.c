@@ -9,6 +9,11 @@ extern QueueHandle_t queue_jump;
 extern QueueHandle_t queue_command_wifi;
 extern SemaphoreHandle_t sem_measure_force;
 
+extern QueueHandle_t xMeasurePressureQueue;
+extern QueueHandle_t xPrintQueue;
+extern SemaphoreHandle_t sem_pressure_index;
+extern TaskHandle_t TaskHandle_set_matrix_index;
+
 /*==================[declaraciones de funciones internas]====================*/
 
 /*==================[declaraciones de funciones externas]====================*/
@@ -44,9 +49,12 @@ int main( void )
     create_queue(&queue_force_average,1,sizeof(unsigned long));
     create_queue(&queue_jump,1,JUMP_N*sizeof(unsigned long));
     create_queue(&queue_command_wifi,1,sizeof(int));
+    create_queue(&xMeasurePressureQueue,1,sizeof(int[2]));
+    create_queue(&xPrintQueue,196,sizeof(int)); // MAX_ROW * MAX_COL = 196
 
     // Creación del semáforo
     create_semaphore(&sem_measure_force);
+    create_semaphore(sem_pressure_index);
 
     // Creación y validacion de las tareas
 	create_task(task_tare,"task_tare",SIZE,0,1,NULL);

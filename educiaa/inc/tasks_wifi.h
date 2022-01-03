@@ -12,7 +12,6 @@
 #include "FreeRTOSConfig.h"
 #include "auxs.h"
 #include "tasks_force.h"
-#include "protocol.h"
 #include <string.h>
 #include "tasks_pressure.h"
 

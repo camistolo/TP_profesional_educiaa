@@ -12,8 +12,8 @@
 #include "FreeRTOSConfig.h"
 #include "tasks_wifi.h"
 #include "tasks_force.h"
+#include "tasks_pressure.h"
 #include "auxs.h"
-#include "protocol.h"
 /*==================[definiciones y macros]==================================*/
 
 /*==================[definiciones de datos internos]=========================*/
