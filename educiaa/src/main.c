@@ -8,11 +8,16 @@ extern QueueHandle_t queue_force_average;
 extern QueueHandle_t queue_jump;
 extern QueueHandle_t queue_command_wifi;
 extern SemaphoreHandle_t sem_measure_force;
+extern QueueHandle_t queue_jump_parameters;
 
 extern QueueHandle_t xMeasurePressureQueue;
 extern QueueHandle_t xPrintQueue;
 extern SemaphoreHandle_t sem_pressure_index;
-extern TaskHandle_t TaskHandle_set_matrix_index;
+extern SemaphoreHandle_t sem_pressure_finished;
+
+extern SemaphoreHandle_t sem_matrix_print_finished;
+extern SemaphoreHandle_t sem_vector_print_finished;
+extern SemaphoreHandle_t sem_parameters_print_finished;
 
 /*==================[declaraciones de funciones internas]====================*/
 
@@ -47,14 +52,19 @@ int main( void )
     // Creación de las colas
     create_queue(&queue_force,1,sizeof(unsigned long));
     create_queue(&queue_force_average,1,sizeof(unsigned long));
-    create_queue(&queue_jump,1,JUMP_N*sizeof(unsigned long));
+    create_queue(&queue_jump,JUMP_N,sizeof(double));
+    create_queue(&queue_jump_parameters,1,sizeof(struct jump_parameters));
     create_queue(&queue_command_wifi,1,sizeof(int));
     create_queue(&xMeasurePressureQueue,1,sizeof(int[2]));
     create_queue(&xPrintQueue,196,sizeof(int)); // MAX_ROW * MAX_COL = 196
 
     // Creación del semáforo
     create_semaphore(&sem_measure_force);
-    create_semaphore(sem_pressure_index);
+    create_semaphore(&sem_pressure_index);
+    create_semaphore(&sem_pressure_finished);
+    create_semaphore(&sem_matrix_print_finished);
+    create_semaphore(&sem_vector_print_finished);
+    create_semaphore(&sem_parameters_print_finished);
 
     // Creación y validacion de las tareas
 	create_task(task_tare,"task_tare",SIZE,0,1,NULL);

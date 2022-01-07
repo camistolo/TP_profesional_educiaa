@@ -87,12 +87,12 @@ struct jump_parameters {
 // Prototipo de funcion de la tarea
 void task_measure_force( void* taskParmPtr );
 void task_hx711_ready( void* taskParmPtr );
-void task_average_force( void* taskParmPtr );
+//void task_average_force( void* taskParmPtr );
 void task_median_force( void* taskParmPtr );
 void task_tare( void* taskParmPtr );
 void task_weight( void* taskParmPtr );
-void task_jump( void* taskParmPtr );
-void task_jump_parameters( void* taskParmPtr );
+//void task_jump( void* taskParmPtr );
+void task_calculate_jump_parameters( void* taskParmPtr );
 
 /*==================[funcion principal]======================================*/
 

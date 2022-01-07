@@ -6,43 +6,16 @@ DEBUG_PRINT_ENABLE;
 QueueHandle_t queue_force;
 QueueHandle_t queue_force_average;
 QueueHandle_t queue_jump;
+QueueHandle_t queue_jump_parameters;
 SemaphoreHandle_t sem_measure_force;
 
-extern SemaphoreHandle_t sem_pressure_index;
+extern TaskHandle_t TaskHandle_print_measurements;
 
 extern void format( float valor, char *dst, uint8_t pos );
 /*==================[definiciones de datos internos]=========================*/
 
 volatile unsigned long OFFSET = 0;
 volatile unsigned long PESO = 0;
-//extern int stage;
-/*
-typedef enum
-{
-    STAGE_TARE,
-    STAGE_WEIGHT,
-    STAGE_FORCE,
-    STAGE_PRESSURE
-} platformStage_t;
-
-struct platformState{
-	platformStage_t pStage;	//etapa de medicion (tara:0, peso:1, fuerza:2, presion:3)
-	unsigned long offset;	//valor de tara
-	int measurementsNumber;	//cantidad de mediciones realizadas en cada instante
-	bool UARTSent;	//indica si se envio por UART o no lo que se deseaba
-	unsigned long force;
-	TickType_t timePassed;
-} platformState_t;
-
-struct platformMeasurements{
-	float weight;
-	float takeoffSpeed;
-	float jumpTime;
-	float jumpHeight;
-	float jumpPower;
-	float rightPressure[24][14]; //memset(arr, 0, sizeof arr);
-	float leftPressure[24][14]; //memset(arr, 0, sizeof arr);
-} platformMeasurements_t;*/
 
 // Handles de las tareas
 TaskHandle_t TaskHandle_hx711_ready;
@@ -162,6 +135,9 @@ void task_measure_force( void* taskParmPtr )
 //			gcvt(time_diff,10,str_aux);
 			//sprintf(str_aux, "TIME: %f \r\n",time_diff);
 //			uartWriteString(UART_USB,str_aux);
+			if (Count < OFFSET) {
+				Count = OFFSET;
+			}
 
 			// Enviar medicion a la tarea correspondiente
 			xQueueSend(queue_force , &Count,  portMAX_DELAY);
@@ -175,63 +151,63 @@ void task_measure_force( void* taskParmPtr )
 	}
 }
 
-// Tarea que promedia los valores medidos
-void task_average_force( void* taskParmPtr )
-{
-    // ---------- CONFIGURACIONES ------------------------------
-	TickType_t xPeriodicity =  TASK_RATE_1;		// Tarea periodica cada 1 ms
-	TickType_t xLastWakeTime = xTaskGetTickCount();
-
-	unsigned long f;
-	unsigned long sum = 0;
-	int counter = 0;
-	unsigned long avg;
-	char str_aux[50] = {};
-
-	//SystemCoreClockUpdate();
-	//cyclesCounterConfig(EDU_CIAA_NXP_CLOCK_SPEED);
-
-//	float time_diff;
-//	uint32_t Counter = 0;
-
-    // ---------- REPETIR POR SIEMPRE --------------------------
-	while ( TRUE ){
-
-		//gpioWrite( LEDB , ON );
-		//vTaskDelay( 40 / portTICK_RATE_MS );
-		//gpioWrite( LEDB , OFF );
-
-		if(xQueueReceive(queue_force , &f,  portMAX_DELAY)){
-
-//			cyclesCounterReset();
-
-			if (counter == AVERAGE_N){
-				// Calcular el promedio de las AVERAGE_N mediciones
-				avg = sum / AVERAGE_N;
-				// Enviar el promedio por cola
-				xQueueSend(queue_force_average , &avg,  portMAX_DELAY);
-				vTaskDelete(TaskHandle_measure_force);
-				vTaskDelete(NULL);
-			}
-			else{
-				sum += f;
-				//sprintf(str_aux, "f: %lu \r\n", f);
-				//uartWriteString(UART_USB,str_aux);
-				counter++;
-				// Volver a hacer otra medicion
-				xSemaphoreGive( sem_measure_force );
-			}
-		}
-
-//		Counter = cyclesCounterRead();
-//		time_diff = (float)Counter/((float)EDU_CIAA_NXP_CLOCK_SPEED/1000000.0);
-		//gcvt(time_diff,10,str_aux);
-		//uartWriteString(UART_USB,str_aux);
-
-		// Delay periódico
-		vTaskDelayUntil( &xLastWakeTime , xPeriodicity );
-	}
-}
+//// Tarea que promedia los valores medidos
+//void task_average_force( void* taskParmPtr )
+//{
+//    // ---------- CONFIGURACIONES ------------------------------
+//	TickType_t xPeriodicity =  TASK_RATE_1;		// Tarea periodica cada 1 ms
+//	TickType_t xLastWakeTime = xTaskGetTickCount();
+//
+//	unsigned long f;
+//	unsigned long sum = 0;
+//	int counter = 0;
+//	unsigned long avg;
+//	char str_aux[50] = {};
+//
+//	//SystemCoreClockUpdate();
+//	//cyclesCounterConfig(EDU_CIAA_NXP_CLOCK_SPEED);
+//
+////	float time_diff;
+////	uint32_t Counter = 0;
+//
+//    // ---------- REPETIR POR SIEMPRE --------------------------
+//	while ( TRUE ){
+//
+//		//gpioWrite( LEDB , ON );
+//		//vTaskDelay( 40 / portTICK_RATE_MS );
+//		//gpioWrite( LEDB , OFF );
+//
+//		if(xQueueReceive(queue_force , &f,  portMAX_DELAY)){
+//
+////			cyclesCounterReset();
+//
+//			if (counter == AVERAGE_N){
+//				// Calcular el promedio de las AVERAGE_N mediciones
+//				avg = sum / AVERAGE_N;
+//				// Enviar el promedio por cola
+//				xQueueSend(queue_force_average , &avg,  portMAX_DELAY);
+//				vTaskDelete(TaskHandle_measure_force);
+//				vTaskDelete(NULL);
+//			}
+//			else{
+//				sum += f;
+//				//sprintf(str_aux, "f: %lu \r\n", f);
+//				//uartWriteString(UART_USB,str_aux);
+//				counter++;
+//				// Volver a hacer otra medicion
+//				xSemaphoreGive( sem_measure_force );
+//			}
+//		}
+//
+////		Counter = cyclesCounterRead();
+////		time_diff = (float)Counter/((float)EDU_CIAA_NXP_CLOCK_SPEED/1000000.0);
+//		//gcvt(time_diff,10,str_aux);
+//		//uartWriteString(UART_USB,str_aux);
+//
+//		// Delay periódico
+//		vTaskDelayUntil( &xLastWakeTime , xPeriodicity );
+//	}
+//}
 
 // Tarea que promedia los valores medidos
 void task_median_force( void* taskParmPtr )
@@ -380,75 +356,74 @@ void task_weight( void* taskParmPtr )
 	}
 }
 
-// Tarea que calcula el valor principal del salto
-void task_jump( void* taskParmPtr )
-{
-    // ---------- CONFIGURACIONES ------------------------------
-	TickType_t xPeriodicity =  TASK_RATE_5;		// Tarea periodica cada 500 ms
-	TickType_t xLastWakeTime = xTaskGetTickCount();
-
-	uartWriteString(UART_USB, "TAREA_JUMP \r\n");
-
-	//unsigned long offset;
-	unsigned long f = 0;
-	unsigned long jump_values[JUMP_N];
-	size_t i = 0;
-	char str_aux[50] = {};
-	char fl_str_aux[64] = {};
-
-//	cyclesCounterConfig(EDU_CIAA_NXP_CLOCK_SPEED);
-//	cyclesCounterReset();
-
-	measurement_mode_t mode = SIMPLE_MODE;
-	create_task(task_measure_force,"task_measure_force",SIZE,&mode,1,&TaskHandle_measure_force);
-
-    // ---------- REPETIR POR SIEMPRE --------------------------
-	while ( TRUE ){
-//		gpioWrite( LED2 , ON );
-//		vTaskDelay( 40 / portTICK_RATE_MS );
-//		gpioWrite( LED2 , OFF );
-
-		xSemaphoreGive( sem_measure_force );
-
-		if(xQueueReceive(queue_force , &f,  portMAX_DELAY)){
-
-			// El HX711 genera picos esporadicos que son debidos a una falla de diseno del chip.
-			// Por esta razon, si se observa un pico, se lo filtra, poniendole a la fuerza el mismo
-			// valor que el que se obtuvo anteriormente.
-//			if (i > 0 && ( f < OFFSET || abs(f - jump_values[i - 1]) >= ((15 * SCALE) + OFFSET) ) ) {
-//				f = jump_values[i - 1];
+//// Tarea que calcula el valor principal del salto
+//void task_jump( void* taskParmPtr )
+//{
+//    // ---------- CONFIGURACIONES ------------------------------
+//	TickType_t xPeriodicity =  TASK_RATE_5;		// Tarea periodica cada 500 ms
+//	TickType_t xLastWakeTime = xTaskGetTickCount();
+//
+//	uartWriteString(UART_USB, "TAREA_JUMP \r\n");
+//
+//	//unsigned long offset;
+//	unsigned long f = 0;
+//	unsigned long jump_values[JUMP_N];
+//	size_t i = 0;
+//	char str_aux[50] = {};
+//	char fl_str_aux[64] = {};
+//
+////	cyclesCounterConfig(EDU_CIAA_NXP_CLOCK_SPEED);
+////	cyclesCounterReset();
+//
+//	measurement_mode_t mode = SIMPLE_MODE;
+//	create_task(task_measure_force,"task_measure_force",SIZE,&mode,1,&TaskHandle_measure_force);
+//
+//    // ---------- REPETIR POR SIEMPRE --------------------------
+//	while ( TRUE ){
+////		gpioWrite( LED2 , ON );
+////		vTaskDelay( 40 / portTICK_RATE_MS );
+////		gpioWrite( LED2 , OFF );
+//
+//		xSemaphoreGive( sem_measure_force );
+//
+//		if(xQueueReceive(queue_force , &f,  portMAX_DELAY)){
+//
+//			// El HX711 genera picos esporadicos que son debidos a una falla de diseno del chip.
+//			// Por esta razon, si se observa un pico, se lo filtra, poniendole a la fuerza el mismo
+//			// valor que el que se obtuvo anteriormente.
+////			if (i > 0 && ( f < OFFSET || abs(f - jump_values[i - 1]) >= ((15 * SCALE) + OFFSET) ) ) {
+////				f = jump_values[i - 1];
+////			}
+//
+//			if(i > 0 && f < OFFSET ) {
+//				f = OFFSET;
 //			}
-
-			if(i > 0 && f < OFFSET ) {
-				f = OFFSET;
-			}
-
-			if (i == sizeof(jump_values)/sizeof(unsigned long)) {
-				create_task(task_jump_parameters,"task_jump_parameters",SIZE,0,1,NULL);
-				xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
-				vTaskDelete(NULL);
-			}
-
-			xSemaphoreGive( sem_pressure_index );
-
-			jump_values[i++] = f;
-			sprintf(fl_str_aux, "%lu \r\n", f);
-			uartWriteString(UART_USB,fl_str_aux);
-		}
-		// Delay periódico
-		vTaskDelayUntil( &xLastWakeTime , xPeriodicity );
-	}
-}
+//
+//			if (i == sizeof(jump_values)/sizeof(unsigned long)) {
+//				create_task(task_jump_parameters,"task_jump_parameters",SIZE,0,1,NULL);
+//				xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
+//				vTaskDelete(NULL);
+//			}
+//
+//			xSemaphoreGive( sem_pressure_index );
+//
+//			jump_values[i++] = f;
+//			sprintf(fl_str_aux, "%lu \r\n", f);
+//			uartWriteString(UART_USB,fl_str_aux);
+//		}
+//		// Delay periódico
+//		vTaskDelayUntil( &xLastWakeTime , xPeriodicity );
+//	}
+//}
 
 // Tarea que calcula los parametros del salto
-void task_jump_parameters( void* taskParmPtr )
+void task_calculate_jump_parameters( void* taskParmPtr )
 {
     // ---------- CONFIGURACIONES ------------------------------
 	TickType_t xPeriodicity =  TASK_RATE_5;		// Tarea periodica cada 5 ms
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 
-	//unsigned long offset;
-	unsigned long jump_values[JUMP_N];
+	//unsigned long jump_values[JUMP_N];
 	double force_sum_1 = 0;
 	double force_sum_2 = 0;
 	double force_sum_3 = 0;
@@ -463,10 +438,12 @@ void task_jump_parameters( void* taskParmPtr )
 	struct jump_parameters jp;
 	const double gravity = 9.8;
 	const double time_diff = 0.02;
-	const double jump_constant = 1.4;
+	const double jump_constant = 1.5;
 	const double weight = ((double)(PESO) - (double)(OFFSET)) / (double)SCALE;
 
 	double zeroed_newton;
+
+	uartWriteString( UART_USB, "task_calculate_jump_parameters\n");
 
     // ---------- REPETIR POR SIEMPRE --------------------------
 	while ( TRUE ){
@@ -474,51 +451,53 @@ void task_jump_parameters( void* taskParmPtr )
 		vTaskDelay( 40 / portTICK_RATE_MS );
 		gpioWrite( LED2 , OFF );
 
-		if(xQueueReceive(queue_jump , jump_values,  portMAX_DELAY)){
-			for (size_t i = 0; i < sizeof(jump_values)/sizeof(unsigned long); i++) {
-				zeroed_newton = ((double)(jump_values[i]) - (double)(PESO)) * gravity / SCALE;
-				if (accelerating_downards == false) {
-					if(zeroed_newton <= -20.0) {
-						accelerating_downards = true;
-					}
+		if(xQueuePeek(queue_jump , &zeroed_newton,  portMAX_DELAY)){
+//			for (size_t i = 0; i < sizeof(jump_values)/sizeof(unsigned long); i++) {
+			if (accelerating_downards == false) {
+				if(zeroed_newton <= -20.0) {
+					accelerating_downards = true;
 				}
-				if (accelerating_downards == true && deaccelerating == false) {
-					if (zeroed_newton > 5.0) {
-						deaccelerating = true;
-					} else {
-						force_sum_1 += fabs(zeroed_newton);
-					}
+			}
+			if (accelerating_downards == true && deaccelerating == false) {
+				if (zeroed_newton > 5.0) {
+					deaccelerating = true;
+				} else {
+					force_sum_1 += fabs(zeroed_newton);
 				}
-				if (deaccelerating == true && accelerating_upwards == false) {
-					if ((force_sum_2 + zeroed_newton) < force_sum_1) {
-						force_sum_2 += zeroed_newton;
-					} else {
-						accelerating_upwards = true;
-					}
+			}
+			if (deaccelerating == true && accelerating_upwards == false) {
+				if ((force_sum_2 + zeroed_newton) < force_sum_1) {
+					force_sum_2 += zeroed_newton;
+				} else {
+					accelerating_upwards = true;
 				}
-				if (accelerating_downards == true && deaccelerating == true && accelerating_upwards == true){
-					if (zeroed_newton > 0.0){
-						force_sum_3 += zeroed_newton;
-					} else {
-						jp.vel = force_sum_3 * time_diff * jump_constant / weight;
-						jp.t =jp.vel / gravity;
-						jp.height = (jp.vel * jp.vel)/ (2 * gravity);
-						jp.power = jp.vel * weight * gravity;
+			}
+			if (accelerating_downards == true && deaccelerating == true && accelerating_upwards == true){
+				if (zeroed_newton > 0.0){
+					force_sum_3 += zeroed_newton;
+				} else {
+					jp.vel = force_sum_3 * time_diff * jump_constant / weight;
+					jp.t =jp.vel / gravity;
+					jp.height = (jp.vel * jp.vel)/ (2 * gravity);
+					jp.power = jp.vel * weight * gravity;
 
-						format(jp.vel,vel_str_aux,0);
+					create_task(print_measurements,"task_print_measurements",SIZE,0,1,&TaskHandle_print_measurements);
+					xQueueSend(&queue_jump_parameters , (void *) &jp,  portMAX_DELAY);
+
+//					format(jp.vel,vel_str_aux,0);
 //						format(jp.t,t_str_aux,0);
 //						format(jp.height,height_str_aux,0);
 //						format(jp.power,power_str_aux,0);
 //						sprintf(str_aux, "vel: %s, t: %s, height: %s, power: %s \r\n", vel_str_aux, t_str_aux, height_str_aux, power_str_aux);
 //						uartWriteString(UART_USB,str_aux);
-						sprintf(str_aux, "vel: %s \r\n", vel_str_aux);
-						uartWriteString(UART_USB,str_aux);
+//					sprintf(str_aux, "vel: %s \r\n", vel_str_aux);
+//					uartWriteString(UART_USB,str_aux);
 
-						vTaskDelete(NULL);
-					}
+					vTaskDelete(NULL);
 				}
 			}
 		}
+//		}
 		// Delay periódico
 		vTaskDelayUntil( &xLastWakeTime , xPeriodicity );
 	}

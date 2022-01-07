@@ -3,7 +3,9 @@
 DEBUG_PRINT_ENABLE;
 
 QueueHandle_t queue_command_wifi;
+extern SemaphoreHandle_t sem_pressure_finished;
 extern TaskHandle_t TaskHandle_weight;
+extern TaskHandle_t TaskHandle_measurements;
 
 #define FRAME_MAX_SIZE  200
 
@@ -163,10 +165,12 @@ void task_choose_measurement( void* pvParameters )
 					break;
 				case FORCE_MEAS:
 					// Activate force measurement task
-					create_task(task_jump,"task_jump",SIZE,0,1,NULL);
+					//create_task(task_jump,"task_jump",SIZE,0,1,NULL);
 					break;
 				case PRESSURE_MEAS:
 					// Activate pressure measurement task
+					create_task(task_measurements,"task_measurements",SIZE,0,1,NULL);
+					xSemaphoreGive(sem_pressure_finished);
 					uartWriteString( UART_USB, "Pressure\n");
 					break;
 

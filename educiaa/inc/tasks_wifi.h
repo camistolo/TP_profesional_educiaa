@@ -14,6 +14,7 @@
 #include "tasks_force.h"
 #include <string.h>
 #include "tasks_pressure.h"
+#include "tasks_measurements.h"
 
 /*==================[definiciones y macros]==================================*/
 

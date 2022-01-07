@@ -21,6 +21,8 @@ void set_matrix_index( void* pvParameters )
     int col = -1;
     int aux_queue;
     int index[2] = {row, col};
+
+    uartWriteString( UART_USB, "task_set_matrix\n");
     // ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
 	{
@@ -61,6 +63,8 @@ void get_pressure_value( void* pvParameters )
 	int i = 0;
 	int int_zero = 0;
 
+	uartWriteString( UART_USB, "task_get_pressure_value\n");
+
 	// ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
 	{
@@ -81,8 +85,8 @@ void get_pressure_value( void* pvParameters )
 //					0                             	// Pointer to the task created in the system
 //				);
 //
-//				vTaskDelete(TaskHandle_set_matrix_index);
-//				vTaskDelete(NULL);
+				vTaskDelete(TaskHandle_set_matrix_index);
+				vTaskDelete(NULL);
 
 				xSemaphoreGive( sem_pressure_finished );
 			}
@@ -123,52 +127,52 @@ void get_pressure_value( void* pvParameters )
 	}
 }
 
-void print_matrix( void* pvParameters )
-{
-	TickType_t xPeriodicity =  1000 / portTICK_RATE_MS;
-	TickType_t xLastWakeTime = xTaskGetTickCount();
-
-	int row_value;
-	int matrix_val;
-	int row=0, col=0;
-
-	char buffer[700];
-
-	stdioPrintf(UART_USED, ">3["); // 3 to indicate pressure measurement.
-	//sprintf(buffer, ">[");
-	// ---------- REPEAT FOR EVER --------------------------
-	while( TRUE )
-	{
-
-		if(xQueueReceive( xPrintQueue, &( matrix_val ), portMAX_DELAY)) // Dequeue matrix data
-		{
-			if (col < (MAX_COL-1))
-			{
-				stdioPrintf(UART_USED, "%d,", matrix_val);
-				//sprintf(buffer, "%s%d,", buffer, matrix_val);
-				col++;
-			}else{
-				col = 0;
-				row++;
-				if (row < MAX_ROW)
-				{
-					stdioPrintf(UART_USED, "%d;", matrix_val);//stdioPrintf(UART_USED, "%d;\n", matrix_val);
-					//sprintf(buffer, "%s%d;", buffer, matrix_val);
-				}else{
-					stdioPrintf(UART_USED, "%d", matrix_val);
-					//sprintf(buffer, "%s%d", buffer, matrix_val);
-				}
-			}
-		}else{
-			stdioPrintf(UART_USED, "]<\n");
-			//sprintf(buffer, "%s]<\n", buffer);
-
-			//stdioPrintf(UART_USED, "%s", buffer);
-
-		   vTaskDelete(NULL);
-		}
-	}
-}
+//void print_matrix( void* pvParameters )
+//{
+//	TickType_t xPeriodicity =  1000 / portTICK_RATE_MS;
+//	TickType_t xLastWakeTime = xTaskGetTickCount();
+//
+//	int row_value;
+//	int matrix_val;
+//	int row=0, col=0;
+//
+//	char buffer[700];
+//
+//	stdioPrintf(UART_USED, ">3["); // 3 to indicate pressure measurement.
+//	//sprintf(buffer, ">[");
+//	// ---------- REPEAT FOR EVER --------------------------
+//	while( TRUE )
+//	{
+//
+//		if(xQueueReceive( xPrintQueue, &( matrix_val ), portMAX_DELAY)) // Dequeue matrix data
+//		{
+//			if (col < (MAX_COL-1))
+//			{
+//				stdioPrintf(UART_USED, "%d,", matrix_val);
+//				//sprintf(buffer, "%s%d,", buffer, matrix_val);
+//				col++;
+//			}else{
+//				col = 0;
+//				row++;
+//				if (row < MAX_ROW)
+//				{
+//					stdioPrintf(UART_USED, "%d;", matrix_val);//stdioPrintf(UART_USED, "%d;\n", matrix_val);
+//					//sprintf(buffer, "%s%d;", buffer, matrix_val);
+//				}else{
+//					stdioPrintf(UART_USED, "%d", matrix_val);
+//					//sprintf(buffer, "%s%d", buffer, matrix_val);
+//				}
+//			}
+//		}else{
+//			stdioPrintf(UART_USED, "]<\n");
+//			//sprintf(buffer, "%s]<\n", buffer);
+//
+//			//stdioPrintf(UART_USED, "%s", buffer);
+//
+//		   vTaskDelete(NULL);
+//		}
+//	}
+//}
 
 #ifndef SENSOR_TEST
 void SetMuxChannel(int channel)
