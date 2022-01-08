@@ -33,7 +33,7 @@ typedef enum {
 #define ClockPin 	ENET_RXD1
 
 // Constantes de los sensores de fuerza
-#define SCALE			17000
+#define SCALE			11270 //17000
 #define GAIN_128		24
 #define GAIN_64			25
 #define GAIN_32			26

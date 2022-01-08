@@ -14,8 +14,8 @@ extern TaskHandle_t TaskHandle_print_measurements;
 extern void format( float valor, char *dst, uint8_t pos );
 /*==================[definiciones de datos internos]=========================*/
 
-volatile unsigned long OFFSET = 0;
-volatile unsigned long PESO = 0;
+unsigned long OFFSET = 0;
+unsigned long PESO = 0;
 
 // Handles de las tareas
 TaskHandle_t TaskHandle_hx711_ready;

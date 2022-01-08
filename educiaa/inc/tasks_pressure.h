@@ -16,7 +16,7 @@
 
 #ifdef SENSOR_TEST
 //#define UART_USED UART_USB
-#define UART_USED UART_232
+#define UART_USED UART_USB
 #endif
 
 #ifdef SENSOR
