@@ -7,10 +7,6 @@ SemaphoreHandle_t sem_pressure_finished;
 TaskHandle_t TaskHandle_set_matrix_index;
 TaskHandle_t TaskHandle_get_pressure_value;
 
-int aux_array_a[(MAX_COL*2)-1] = {};
-int aux_array_b[(MAX_COL*2)-1] = {};
-int aux_array_c[(MAX_COL*2)-1] = {};
-
 void set_matrix_index( void* pvParameters )
 {
 
@@ -38,8 +34,6 @@ void set_matrix_index( void* pvParameters )
 			index[0] = row;
 			index[1] = col;
 
-			stdioPrintf(UART_USB, "%d, %d\n", index[0], index[1]);
-
 			xQueueSend( xMeasurePressureQueue, ( void * ) &index, portMAX_DELAY );
 		}
 	}
@@ -66,6 +60,8 @@ void get_pressure_value( void* pvParameters )
 	{
 		if(xQueueReceive( xMeasurePressureQueue, &( index ), portMAX_DELAY))
 		{
+			stdioPrintf(UART_USB, "%d, %d\n", index[0], index[1]);
+
 			row = index[0];
 			col = index[1];
 

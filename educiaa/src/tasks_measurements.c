@@ -51,7 +51,6 @@ void task_measurements( void* taskParmPtr )
 //	cyclesCounterConfig(EDU_CIAA_NXP_CLOCK_SPEED);
 //	cyclesCounterReset();
 
-	uartWriteString( UART_USB, "task_measurement\n");
 	create_task(set_matrix_index,"set_matrix_index",SIZE,0,2,&TaskHandle_set_matrix_index);
 	create_task(get_pressure_value,"get_pressure_value",SIZE,0,2,&TaskHandle_get_pressure_value);
 
@@ -61,6 +60,8 @@ void task_measurements( void* taskParmPtr )
     // ---------- REPETIR POR SIEMPRE --------------------------
 	while ( TRUE ){
 
+		uartWriteString( UART_USB, "task_measurement\n");
+
 		// Si todavia no recibi todos los valores del salto
 //		if (i < JUMP_N) {
 			// Mandar senal a la tarea que mide la fuerza
@@ -68,6 +69,8 @@ void task_measurements( void* taskParmPtr )
 
 			// Si la presion termino y recibi el valor de la fuerza
 //			if(xQueueReceive(queue_force , &f,  (TickType_t) 10)){
+
+//				i++;
 
 				// Si se recibio el ultimo valor de fuerza, elimino la tarea de fuerza
 //				if (i == JUMP_N) {
@@ -79,8 +82,7 @@ void task_measurements( void* taskParmPtr )
 //					//xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
 //				}
 
-//				i++;
-
+//
 //				zeroed_newton = ((double)(f) - (double)(PESO)) * gravity / SCALE;
 
 				// Guardar los valores de la fuerza en el arreglo
@@ -105,8 +107,6 @@ void task_measurements( void* taskParmPtr )
 //						create_task(set_matrix_index,"set_matrix_index",SIZE,0,2,&TaskHandle_set_matrix_index);
 //						create_task(get_pressure_value,"get_pressure_value",SIZE,0,2,&TaskHandle_get_pressure_value);
 //						back_down = true;
-////					create_task(set_matrix_index,"set_matrix_index",SIZE,0,1,&TaskHandle_set_matrix_index);
-////					create_task(get_pressure_value,"get_pressure_value",SIZE,0,1,&TaskHandle_get_pressure_value);
 //					}
 //				}
 //			}
@@ -166,7 +166,7 @@ void print_matrix( void* pvParameters )
 	// ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
 	{
-		if(xQueueReceive( xPrintQueue, &( matrix_val ), portMAX_DELAY)) // Dequeue matrix data
+		if(xQueueReceive( xPrintQueue, &( matrix_val ), (TickType_t) 10)) // Dequeue matrix data
 		{
 			if (col < (MAX_COL-1))
 			{
