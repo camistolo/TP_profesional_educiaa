@@ -36,8 +36,6 @@ void task_measurements( void* taskParmPtr )
 	TickType_t xPeriodicity =  TASK_RATE_5;		// Tarea periodica cada 500 ms
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 
-	uartWriteString(UART_USB, "TAREA_JUMP \r\n");
-
 	//unsigned long offset;
 	unsigned long f = 0;
 	unsigned long jump_values[JUMP_N];
@@ -46,6 +44,7 @@ void task_measurements( void* taskParmPtr )
 	char fl_str_aux[64] = {};
 	bool on_air = false;
 	double zeroed_newton;
+	const double gravity = 9.8;
 	int8_t a;
 
 //	cyclesCounterConfig(EDU_CIAA_NXP_CLOCK_SPEED);
@@ -65,7 +64,7 @@ void task_measurements( void* taskParmPtr )
 			xSemaphoreGive( sem_measure_force );
 
 			// Si la presion termino y recibi el valor de la fuerza
-			if(xQueueReceive(queue_force , &f,  portMAX_DELAY)){
+			if(xQueueReceive(queue_force , &f,  (TickType_t) 10)){
 
 //				if(i > 0 && f < OFFSET ) {
 //					f = OFFSET;
@@ -80,6 +79,8 @@ void task_measurements( void* taskParmPtr )
 					create_task(task_calculate_jump_parameters,"task_calculate_jump_parameters",SIZE,0,1,NULL);
 					//xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
 				}
+
+				i++;
 
 				zeroed_newton = ((double)(f) - (double)(PESO)) * gravity / SCALE;
 
