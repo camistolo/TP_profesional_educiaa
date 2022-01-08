@@ -52,103 +52,104 @@ void task_measurements( void* taskParmPtr )
 //	cyclesCounterReset();
 
 	uartWriteString( UART_USB, "task_measurement\n");
+	create_task(set_matrix_index,"set_matrix_index",SIZE,0,2,&TaskHandle_set_matrix_index);
+	create_task(get_pressure_value,"get_pressure_value",SIZE,0,2,&TaskHandle_get_pressure_value);
 
-	measurement_mode_t mode = SIMPLE_MODE;
-	create_task(task_measure_force,"task_measure_force",SIZE,&mode,1,&TaskHandle_measure_force);
+//	measurement_mode_t mode = SIMPLE_MODE;
+//	create_task(task_measure_force,"task_measure_force",SIZE,&mode,1,&TaskHandle_measure_force);
 
     // ---------- REPETIR POR SIEMPRE --------------------------
 	while ( TRUE ){
 
 		// Si todavia no recibi todos los valores del salto
-		if (i < JUMP_N) {
+//		if (i < JUMP_N) {
 			// Mandar senal a la tarea que mide la fuerza
-			xSemaphoreGive( sem_measure_force );
+//			xSemaphoreGive( sem_measure_force );
 
 			// Si la presion termino y recibi el valor de la fuerza
-			if(xQueueReceive(queue_force , &f,  (TickType_t) 10)){
-
-//				if(i > 0 && f < OFFSET ) {
-//					f = OFFSET;
-//				}
+//			if(xQueueReceive(queue_force , &f,  (TickType_t) 10)){
 
 				// Si se recibio el ultimo valor de fuerza, elimino la tarea de fuerza
-				if (i == JUMP_N) {
-					uartWriteString( UART_USB, "finished whole jump\n");
-					//create_task(task_jump_parameters,"task_jump_parameters",SIZE,0,1,NULL);
-					//xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
-					vTaskDelete(&TaskHandle_measure_force);
-//					create_task(task_calculate_jump_parameters,"task_calculate_jump_parameters",SIZE,0,1,NULL);
-					//xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
-				}
+//				if (i == JUMP_N) {
+//					uartWriteString( UART_USB, "finished whole jump\n");
+//					//create_task(task_jump_parameters,"task_jump_parameters",SIZE,0,1,NULL);
+//					//xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
+//					vTaskDelete(&TaskHandle_measure_force);
+////					create_task(task_calculate_jump_parameters,"task_calculate_jump_parameters",SIZE,0,1,NULL);
+//					//xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
+//				}
 
-				i++;
+//				i++;
 
-				zeroed_newton = ((double)(f) - (double)(PESO)) * gravity / SCALE;
+//				zeroed_newton = ((double)(f) - (double)(PESO)) * gravity / SCALE;
 
 				// Guardar los valores de la fuerza en el arreglo
-				xQueueSend( queue_jump, &zeroed_newton, portMAX_DELAY);
-				//jump_values[i++] = f;
-				sprintf(fl_str_aux, "%lu \r\n", f);
-				uartWriteString(UART_USB,fl_str_aux);
+//				xQueueSend( queue_jump, &zeroed_newton, portMAX_DELAY);
+//				sprintf(fl_str_aux, "%lu \r\n", f);
+//				uartWriteString(UART_USB,fl_str_aux);
 
 				// Si el usuario se encuentra en el aire, seteo la flag de on_air a true
-				if( (((double)f-(double)OFFSET) <= 100000) && !back_down) {
-					on_air = true;
-//					uartWriteString( UART_USB, "on air\n");
-				}
+//				if( (((double)f-(double)OFFSET) <= 100000) && !back_down) {
+//					on_air = true;
+//				}
 
-				if (on_air && !back_down) {
-					if (zeroed_newton > 20) {
-						uartWriteString( UART_USB, "pressure\n");
-						xSemaphoreGive( sem_pressure_index );
-						create_task(set_matrix_index,"set_matrix_index",SIZE,0,2,&TaskHandle_set_matrix_index);
-						create_task(get_pressure_value,"get_pressure_value",SIZE,0,2,&TaskHandle_get_pressure_value);
-						back_down = true;
-//					create_task(set_matrix_index,"set_matrix_index",SIZE,0,1,&TaskHandle_set_matrix_index);
-//					create_task(get_pressure_value,"get_pressure_value",SIZE,0,1,&TaskHandle_get_pressure_value);
-					}
-				}
-			}
-		} else {
-			create_task(print_measurements,"print_measurements",SIZE,0,1,NULL);
-			vTaskDelete(NULL);
-		}
+				xSemaphoreGive( sem_pressure_index );
+				xSemaphoreTake(sem_pressure_finished, portMAX_DELAY);
+				create_task(print_matrix,"print_matrix",SIZE,0,1,NULL);
+				vTaskDelete(NULL);
+
+//				if (on_air && !back_down) {
+//					if (zeroed_newton > 20) {
+//						uartWriteString( UART_USB, "pressure\n");
+//						xSemaphoreGive( sem_pressure_index );
+//						create_task(set_matrix_index,"set_matrix_index",SIZE,0,2,&TaskHandle_set_matrix_index);
+//						create_task(get_pressure_value,"get_pressure_value",SIZE,0,2,&TaskHandle_get_pressure_value);
+//						back_down = true;
+////					create_task(set_matrix_index,"set_matrix_index",SIZE,0,1,&TaskHandle_set_matrix_index);
+////					create_task(get_pressure_value,"get_pressure_value",SIZE,0,1,&TaskHandle_get_pressure_value);
+//					}
+//				}
+//			}
+//		} else {
+//			create_task(print_matrix,"print_matrix",SIZE,0,1,NULL);
+//			vTaskDelete(NULL);
+//		}
 
 		// Delay periódico
 		vTaskDelayUntil( &xLastWakeTime , xPeriodicity );
 	}
 }
 
-void print_measurements( void* pvParameters )
-{
-	TickType_t xPeriodicity =  1000 / portTICK_RATE_MS;
-	TickType_t xLastWakeTime = xTaskGetTickCount();
-
-	uartWriteString( UART_USB, "print_values\n");
-
-//	char buffer[700];
-
-	//stdioPrintf(UART_USED, ">3["); // 3 to indicate pressure measurement.
-	//sprintf(buffer, ">[");
-	// ---------- REPEAT FOR EVER --------------------------
-	while( TRUE )
-	{
-		create_task(print_matrix,"task_print_matrix",SIZE,0,1,NULL);
-
-		if(xSemaphoreTake(sem_matrix_print_finished, portMAX_DELAY)) {
-			create_task(print_vector,"task_print_vector",SIZE,0,1,NULL);
-		}
-
-//		if(xSemaphoreTake(sem_vector_print_finished, portMAX_DELAY)) {
-//			create_task(print_parameters,"task_print_parameters",SIZE,0,1,NULL);
+//void print_measurements( void* pvParameters )
+//{
+//	TickType_t xPeriodicity =  1000 / portTICK_RATE_MS;
+//	TickType_t xLastWakeTime = xTaskGetTickCount();
+//
+//	uartWriteString( UART_USB, "print_values\n");
+//
+////	char buffer[700];
+//
+//	//stdioPrintf(UART_USED, ">3["); // 3 to indicate pressure measurement.
+//	//sprintf(buffer, ">[");
+//	// ---------- REPEAT FOR EVER --------------------------
+//	while( TRUE )
+//	{
+//		create_task(print_matrix,"task_print_matrix",SIZE,0,1,NULL);
+//
+//		if(xSemaphoreTake(sem_matrix_print_finished, portMAX_DELAY)) {
+//			create_task(print_vector,"task_print_vector",SIZE,0,1,NULL);
 //		}
-
-		if(xSemaphoreTake(sem_parameters_print_finished, portMAX_DELAY)) {
-			create_task(task_receive_wifi,"task_receive_wifi",SIZE,0,1,NULL);
-			vTaskDelete(NULL);
-		}
-	}
-}
+//
+////		if(xSemaphoreTake(sem_vector_print_finished, portMAX_DELAY)) {
+////			create_task(print_parameters,"task_print_parameters",SIZE,0,1,NULL);
+////		}
+//
+//		if(xSemaphoreTake(sem_parameters_print_finished, portMAX_DELAY)) {
+//			create_task(task_receive_wifi,"task_receive_wifi",SIZE,0,1,NULL);
+//			vTaskDelete(NULL);
+//		}
+//	}
+//}
 
 void print_matrix( void* pvParameters )
 {
@@ -160,7 +161,7 @@ void print_matrix( void* pvParameters )
 
 //	char buffer[700];
 
-	stdioPrintf(UART_USB, ">{\"matriz\": ["); // 3 to indicate pressure measurement.
+	stdioPrintf(UART_USB, "matriz:\n"); // 3 to indicate pressure measurement.
 	//sprintf(buffer, ">[");
 	// ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
@@ -169,7 +170,7 @@ void print_matrix( void* pvParameters )
 		{
 			if (col < (MAX_COL-1))
 			{
-				stdioPrintf(UART_USB, "%d,", matrix_val);
+				stdioPrintf(UART_USB, "%d\t", matrix_val);
 				//sprintf(buffer, "%s%d,", buffer, matrix_val);
 				col++;
 			}else{
@@ -177,7 +178,7 @@ void print_matrix( void* pvParameters )
 				row++;
 				if (row < MAX_ROW)
 				{
-					stdioPrintf(UART_USB, "%d;", matrix_val);//stdioPrintf(UART_USED, "%d;\n", matrix_val);
+					stdioPrintf(UART_USB, "%d\n", matrix_val);//stdioPrintf(UART_USED, "%d;\n", matrix_val);
 					//sprintf(buffer, "%s%d;", buffer, matrix_val);
 				}else{
 					stdioPrintf(UART_USB, "%d", matrix_val);
@@ -185,11 +186,12 @@ void print_matrix( void* pvParameters )
 				}
 			}
 		}else{
-			stdioPrintf(UART_USB, "]<\n");
+			stdioPrintf(UART_USB, "\n");
 			//sprintf(buffer, "%s]<\n", buffer);
 
 			//stdioPrintf(UART_USED, "%s", buffer);
-			xSemaphoreGive(sem_matrix_print_finished);
+//			xSemaphoreGive(sem_matrix_print_finished);
+			create_task(task_receive_wifi,"task_receive_wifi",SIZE,0,1,NULL);
 		    vTaskDelete(NULL);
 		}
 	}

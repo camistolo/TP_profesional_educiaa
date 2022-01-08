@@ -27,7 +27,6 @@ void set_matrix_index( void* pvParameters )
 	{
 		if (xSemaphoreTake(sem_pressure_index, portMAX_DELAY))
 		{
-			uartWriteString(UART_USB, "sem_index_arrived\n");
 			if(col < MAX_COL-1)
 			{
 				col++;
@@ -38,6 +37,8 @@ void set_matrix_index( void* pvParameters )
 
 			index[0] = row;
 			index[1] = col;
+
+			stdioPrintf(UART_USB, "%d, %d\n", index[0], index[1]);
 
 			xQueueSend( xMeasurePressureQueue, ( void * ) &index, portMAX_DELAY );
 		}
@@ -57,11 +58,8 @@ void get_pressure_value( void* pvParameters )
 	int sensor_in[MAX_ROW] = {demuxY0, demuxY1, demuxY2, demuxY3, demuxY4, demuxY5, demuxY6, demuxY7, demuxY8, demuxY9, demuxY10, demuxY11, demuxY12, demuxY13};
 	#endif
 
-	int row = 0;
-	int col = 1;
+	int row,col;
 	int index[2];
-	int i = 0;
-	int int_zero = 0;
 
 	// ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
@@ -84,10 +82,8 @@ void get_pressure_value( void* pvParameters )
 //					0                             	// Pointer to the task created in the system
 //				);
 //
+				xSemaphoreGive( sem_pressure_finished );
 				vTaskDelete(TaskHandle_set_matrix_index);
-
-//				xSemaphoreGive( sem_pressure_finished );
-
 				vTaskDelete(NULL);
 			}
 
@@ -111,7 +107,7 @@ void get_pressure_value( void* pvParameters )
 			gpioWrite(demuxSIG, LOW);
 			#endif
 
-			uartWriteString(UART_USB, "pressure\n");
+			stdioPrintf(UART_USB, "%d\t", sensor_value);
 
 			xQueueSendToBack( xPrintQueue, ( void * ) &sensor_value, portMAX_DELAY ); // Enqueue matrix data
 
