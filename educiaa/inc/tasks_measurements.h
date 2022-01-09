@@ -25,9 +25,6 @@
 
 /*==================[declaraciones de funciones externas]====================*/
 
-//TickType_t get_diff();
-//void clear_diff();
-
 // Prototipo de funcion de la tarea
 void task_measurements( void* taskParmPtr );
 void print_measurements( void* taskParmPtr );

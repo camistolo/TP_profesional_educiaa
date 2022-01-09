@@ -41,7 +41,7 @@ typedef enum {
 #define AVERAGE_N		20
 
 // Cantidad de mediciones tomadas durante el salto
-#define JUMP_N		200
+#define JUMP_N		100
 
 // Constantes de la periodicidad de las tareas
 #define TASK_RATE_1000_MS	1000

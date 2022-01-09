@@ -15,7 +15,6 @@ void set_matrix_index( void* pvParameters )
 
     int row = 0;
     int col = -1;
-    int aux_queue;
     int index[2] = {row, col};
 
     // ---------- REPEAT FOR EVER --------------------------
@@ -60,7 +59,7 @@ void get_pressure_value( void* pvParameters )
 	{
 		if(xQueueReceive( xMeasurePressureQueue, &( index ), portMAX_DELAY))
 		{
-			stdioPrintf(UART_USB, "%d, %d\n", index[0], index[1]);
+//			stdioPrintf(UART_USB, "%d, %d\n", index[0], index[1]);
 
 			row = index[0];
 			col = index[1];
@@ -103,7 +102,7 @@ void get_pressure_value( void* pvParameters )
 			gpioWrite(demuxSIG, LOW);
 			#endif
 
-			stdioPrintf(UART_USB, "%d\t", sensor_value);
+//			stdioPrintf(UART_USB, "%d\t", sensor_value);
 
 			xQueueSendToBack( xPrintQueue, ( void * ) &sensor_value, portMAX_DELAY ); // Enqueue matrix data
 

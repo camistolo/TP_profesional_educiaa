@@ -44,76 +44,74 @@ void task_measurements( void* taskParmPtr )
 	char fl_str_aux[64] = {};
 	bool back_down = false;
 	bool on_air = false;
-	double zeroed_newton;
+	int zeroed_newton;
 	const double gravity = 9.8;
 	int8_t a;
 
 //	cyclesCounterConfig(EDU_CIAA_NXP_CLOCK_SPEED);
 //	cyclesCounterReset();
 
-	create_task(set_matrix_index,"set_matrix_index",SIZE,0,2,&TaskHandle_set_matrix_index);
-	create_task(get_pressure_value,"get_pressure_value",SIZE,0,2,&TaskHandle_get_pressure_value);
+	measurement_mode_t mode = SIMPLE_MODE;
+	create_task(task_measure_force,"task_measure_force",SIZE,&mode,1,&TaskHandle_measure_force);
 
-//	measurement_mode_t mode = SIMPLE_MODE;
-//	create_task(task_measure_force,"task_measure_force",SIZE,&mode,1,&TaskHandle_measure_force);
+	//uartWriteString( UART_USB, "task_measurement\n");
 
     // ---------- REPETIR POR SIEMPRE --------------------------
 	while ( TRUE ){
 
-		uartWriteString( UART_USB, "task_measurement\n");
-
 		// Si todavia no recibi todos los valores del salto
-//		if (i < JUMP_N) {
+		if (i < JUMP_N) {
 			// Mandar senal a la tarea que mide la fuerza
-//			xSemaphoreGive( sem_measure_force );
+			xSemaphoreGive( sem_measure_force );
 
 			// Si la presion termino y recibi el valor de la fuerza
-//			if(xQueueReceive(queue_force , &f,  (TickType_t) 10)){
+			if(xQueueReceive(queue_force , &f,  (TickType_t) 10)){
 
-//				i++;
+				i++;
 
 				// Si se recibio el ultimo valor de fuerza, elimino la tarea de fuerza
-//				if (i == JUMP_N) {
+				if (i == JUMP_N) {
 //					uartWriteString( UART_USB, "finished whole jump\n");
-//					//create_task(task_jump_parameters,"task_jump_parameters",SIZE,0,1,NULL);
-//					//xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
-//					vTaskDelete(&TaskHandle_measure_force);
-////					create_task(task_calculate_jump_parameters,"task_calculate_jump_parameters",SIZE,0,1,NULL);
-//					//xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
-//				}
+					//create_task(task_jump_parameters,"task_jump_parameters",SIZE,0,1,NULL);
+					//xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
+					vTaskDelete(TaskHandle_measure_force);
+					create_task(print_matrix,"print_matrix",SIZE,0,1,NULL);
+					vTaskDelete(NULL);
+//					create_task(task_calculate_jump_parameters,"task_calculate_jump_parameters",SIZE,0,1,NULL);
+					//xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
+				}
 
-//
-//				zeroed_newton = ((double)(f) - (double)(PESO)) * gravity / SCALE;
+				zeroed_newton = ((double)(f) - (double)(PESO)) * gravity / SCALE;
 
 				// Guardar los valores de la fuerza en el arreglo
-//				xQueueSend( queue_jump, &zeroed_newton, portMAX_DELAY);
-//				sprintf(fl_str_aux, "%lu \r\n", f);
-//				uartWriteString(UART_USB,fl_str_aux);
+				xQueueSend( queue_jump, &zeroed_newton, portMAX_DELAY);
+				sprintf(fl_str_aux, "%lu \r\n", f);
+				uartWriteString(UART_USB,fl_str_aux);
 
 				// Si el usuario se encuentra en el aire, seteo la flag de on_air a true
-//				if( (((double)f-(double)OFFSET) <= 100000) && !back_down) {
-//					on_air = true;
-//				}
+				if( (((double)f-(double)OFFSET) <= 100000) && !back_down) {
+					on_air = true;
+				}
 
-				xSemaphoreGive( sem_pressure_index );
-				xSemaphoreTake(sem_pressure_finished, portMAX_DELAY);
-				create_task(print_matrix,"print_matrix",SIZE,0,1,NULL);
-				vTaskDelete(NULL);
+//				xSemaphoreGive( sem_pressure_index );
+//				xSemaphoreTake(sem_pressure_finished, portMAX_DELAY);
+//				create_task(print_matrix,"print_matrix",SIZE,0,1,NULL);
+//				vTaskDelete(NULL);
 
-//				if (on_air && !back_down) {
-//					if (zeroed_newton > 20) {
-//						uartWriteString( UART_USB, "pressure\n");
-//						xSemaphoreGive( sem_pressure_index );
-//						create_task(set_matrix_index,"set_matrix_index",SIZE,0,2,&TaskHandle_set_matrix_index);
-//						create_task(get_pressure_value,"get_pressure_value",SIZE,0,2,&TaskHandle_get_pressure_value);
-//						back_down = true;
-//					}
-//				}
-//			}
+				if (on_air && !back_down) {
+					if (zeroed_newton > 20) {
+						uartWriteString( UART_USB, "pressure\n");
+						xSemaphoreGive( sem_pressure_index );
+						create_task(set_matrix_index,"set_matrix_index",SIZE,0,2,&TaskHandle_set_matrix_index);
+						create_task(get_pressure_value,"get_pressure_value",SIZE,0,2,&TaskHandle_get_pressure_value);
+						back_down = true;
+					}
+				}
+			}
 //		} else {
 //			create_task(print_matrix,"print_matrix",SIZE,0,1,NULL);
 //			vTaskDelete(NULL);
-//		}
+		}
 
 		// Delay periódico
 		vTaskDelayUntil( &xLastWakeTime , xPeriodicity );

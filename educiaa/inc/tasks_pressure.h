@@ -3,6 +3,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include "auxs.h"
 #include "sapi.h"
 #include "FreeRTOSConfig.h"
 #include "semphr.h"

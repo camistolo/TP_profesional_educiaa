@@ -50,7 +50,7 @@ extern int DbgConsole_Printf( const char *fmt_s, ... );
 
 //#define configUSE_TIME_SLICING 						1
 
-#define configSUPPORT_STATIC_ALLOCATION              0
+#define configSUPPORT_STATIC_ALLOCATION              1
 
 #define configUSE_PREEMPTION                         1
 #define configUSE_IDLE_HOOK                          0
@@ -60,7 +60,7 @@ extern int DbgConsole_Printf( const char *fmt_s, ... );
 #define configCPU_CLOCK_HZ                           ( SystemCoreClock )
 #define configTICK_RATE_HZ                           ( ( TickType_t ) 1000 ) // 1000 ticks per second => 1ms tick rate
 #define configMAX_PRIORITIES                         ( 7 )
-#define configMINIMAL_STACK_SIZE                     ( ( uint16_t ) 180 )
+#define configMINIMAL_STACK_SIZE                     ( ( uint16_t ) 90 ) //180
 #define configTOTAL_HEAP_SIZE                        ( ( size_t ) ( 24 * 1024 ) )    /* 8Kbytes. */
 #define configMAX_TASK_NAME_LEN                      ( 16 )
 #define configUSE_TRACE_FACILITY                     1
