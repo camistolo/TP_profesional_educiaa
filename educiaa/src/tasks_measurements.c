@@ -38,79 +38,96 @@ void task_measurements( void* taskParmPtr )
 
 	//unsigned long offset;
 	unsigned long f = 0;
-	unsigned long jump_values[JUMP_N];
-	int i = 0;
+	unsigned long last_f = OFFSET;
+	int force_amount = 0;
 	char str_aux[50] = {};
 	char fl_str_aux[64] = {};
-	bool back_down = false;
-	bool on_air = false;
+//	bool back_down = false;
+//	bool on_air = false;
 	int zeroed_newton;
 	const double gravity = 9.8;
-	int8_t a;
 
-//	cyclesCounterConfig(EDU_CIAA_NXP_CLOCK_SPEED);
-//	cyclesCounterReset();
+	bool aux = false;
 
+	// Crea la tarea de medicion de fuerza para empezar a medir
 	measurement_mode_t mode = SIMPLE_MODE;
 	create_task(task_measure_force,"task_measure_force",SIZE,&mode,1,&TaskHandle_measure_force);
-
-	//uartWriteString( UART_USB, "task_measurement\n");
 
     // ---------- REPETIR POR SIEMPRE --------------------------
 	while ( TRUE ){
 
 		// Si todavia no recibi todos los valores del salto
-		if (i < JUMP_N) {
+		if (force_amount < JUMP_N) {
 			// Mandar senal a la tarea que mide la fuerza
 			xSemaphoreGive( sem_measure_force );
 
 			// Si la presion termino y recibi el valor de la fuerza
 			if(xQueueReceive(queue_force , &f,  (TickType_t) 10)){
 
-				i++;
+				// Indicar que hay un valor mas de fuerza
+				force_amount++;
 
 				// Si se recibio el ultimo valor de fuerza, elimino la tarea de fuerza
-				if (i == JUMP_N) {
-//					uartWriteString( UART_USB, "finished whole jump\n");
-					//create_task(task_jump_parameters,"task_jump_parameters",SIZE,0,1,NULL);
-					//xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
+				if (force_amount == JUMP_N) {
 					vTaskDelete(TaskHandle_measure_force);
+
+					// Hoy en dia, se mide la presion cuando termina de medirse los 100 valores de fuerza.
+					// Esto podria cambiarse
+					xSemaphoreGive( sem_pressure_index );
+					create_task(set_matrix_index,"set_matrix_index",SIZE,0,2,&TaskHandle_set_matrix_index);
+					create_task(get_pressure_value,"get_pressure_value",SIZE,0,2,&TaskHandle_get_pressure_value);
+					// Esto se puso para debuggear nada mas, pero en realidad aca se llamaria a la tarea
+					// task_calculate_jump_parameters para calcular la velocidad, tiempo, potencia y altura y
+					// despues se llamaria a las tareas de impresion.
 					create_task(print_matrix,"print_matrix",SIZE,0,1,NULL);
 					vTaskDelete(NULL);
-//					create_task(task_calculate_jump_parameters,"task_calculate_jump_parameters",SIZE,0,1,NULL);
+					//create_task(task_calculate_jump_parameters,"task_calculate_jump_parameters",SIZE,0,1,NULL);
 					//xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
 				}
 
+				// Si el valor que se midio es mayor al offset (es como si se midieran kilogramos negativos), se
+				// setea ese valor al valor anterior de fuerza medido.
+				if (f > OFFSET) {
+					f = last_f;
+				}
+
+				// Se actualiza el valor anterior de fuerza al actual
+				last_f = f;
+
+				// Se calcula el valor de fuerza en Newtons pero se pone el cero en el valor del peso del usuario
+				// en Newton
 				zeroed_newton = ((double)(f) - (double)(PESO)) * gravity / SCALE;
 
-				// Guardar los valores de la fuerza en el arreglo
+				// Enviar los valores de la fuerza a la cola queue_jump para dsps calcular los parametros
 				xQueueSend( queue_jump, &zeroed_newton, portMAX_DELAY);
+				// Los valores de la fuerza solo se imprimen para debuggear
 				sprintf(fl_str_aux, "%lu \r\n", f);
 				uartWriteString(UART_USB,fl_str_aux);
 
+				////////////////////////////////////////////////////////////////////////////////////////////////
+				// Todo lo siguiente se hacia para medir la presion apenas la persona cayera, pero ahora esto se
+				// hace cuando se terminan de medir los 100 valores (se puede cambiar)
+
 				// Si el usuario se encuentra en el aire, seteo la flag de on_air a true
-				if( (((double)f-(double)OFFSET) <= 100000) && !back_down) {
-					on_air = true;
-				}
+//				if( (((double)f-(double)OFFSET) <= 100000) && !back_down) {
+//					on_air = true;
+//				}
 
 //				xSemaphoreGive( sem_pressure_index );
 //				xSemaphoreTake(sem_pressure_finished, portMAX_DELAY);
 //				create_task(print_matrix,"print_matrix",SIZE,0,1,NULL);
 //				vTaskDelete(NULL);
 
-				if (on_air && !back_down) {
-					if (zeroed_newton > 20) {
-						uartWriteString( UART_USB, "pressure\n");
-						xSemaphoreGive( sem_pressure_index );
-						create_task(set_matrix_index,"set_matrix_index",SIZE,0,2,&TaskHandle_set_matrix_index);
-						create_task(get_pressure_value,"get_pressure_value",SIZE,0,2,&TaskHandle_get_pressure_value);
-						back_down = true;
-					}
-				}
+//				if (on_air && !back_down) {
+//					if (zeroed_newton > 20) {
+//						uartWriteString( UART_USB, "pressure\n");
+//						xSemaphoreGive( sem_pressure_index );
+//						create_task(set_matrix_index,"set_matrix_index",SIZE,0,2,&TaskHandle_set_matrix_index);
+//						create_task(get_pressure_value,"get_pressure_value",SIZE,0,2,&TaskHandle_get_pressure_value);
+//						back_down = true;
+//					}
+//				}
 			}
-//		} else {
-//			create_task(print_matrix,"print_matrix",SIZE,0,1,NULL);
-//			vTaskDelete(NULL);
 		}
 
 		// Delay periódico
@@ -159,7 +176,7 @@ void print_matrix( void* pvParameters )
 
 //	char buffer[700];
 
-	stdioPrintf(UART_USB, "matriz:\n"); // 3 to indicate pressure measurement.
+	stdioPrintf(UART_USB, "["); // 3 to indicate pressure measurement.
 	//sprintf(buffer, ">[");
 	// ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
@@ -168,7 +185,7 @@ void print_matrix( void* pvParameters )
 		{
 			if (col < (MAX_COL-1))
 			{
-				stdioPrintf(UART_USB, "%d\t", matrix_val);
+				stdioPrintf(UART_USB, "%d,", matrix_val);
 				//sprintf(buffer, "%s%d,", buffer, matrix_val);
 				col++;
 			}else{
@@ -176,7 +193,7 @@ void print_matrix( void* pvParameters )
 				row++;
 				if (row < MAX_ROW)
 				{
-					stdioPrintf(UART_USB, "%d\n", matrix_val);//stdioPrintf(UART_USED, "%d;\n", matrix_val);
+					stdioPrintf(UART_USB, "%d;", matrix_val);//stdioPrintf(UART_USED, "%d;\n", matrix_val);
 					//sprintf(buffer, "%s%d;", buffer, matrix_val);
 				}else{
 					stdioPrintf(UART_USB, "%d", matrix_val);
@@ -184,7 +201,7 @@ void print_matrix( void* pvParameters )
 				}
 			}
 		}else{
-			stdioPrintf(UART_USB, "\n");
+			stdioPrintf(UART_USB, "]");
 			//sprintf(buffer, "%s]<\n", buffer);
 
 			//stdioPrintf(UART_USED, "%s", buffer);

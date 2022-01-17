@@ -21,12 +21,13 @@
 
 /*==================[definiciones y macros]==================================*/
 #define LED_ERROR 		LEDR
-#define MAX_SEM 5
+#define MAX_SEM 		5
 
-#define BASE_PRIORITY 1
-#define SIZE     2
-#define STR_AUX  20
-#define SIZE_UINT sizeof(unsigned int)
+#define BASE_PRIORITY 	1
+#define SIZE     		2
+#define STR_AUX  		20
+#define SIZE_UINT 		sizeof(unsigned int)
+
 
 /*==================[prototipos]=========================*/
 //void tecla_led_init(void);

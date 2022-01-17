@@ -13,6 +13,7 @@
 #include "tasks_wifi.h"
 #include "tasks_force.h"
 #include "tasks_pressure.h"
+#include "tasks_measurements.h"
 #include "auxs.h"
 /*==================[definiciones y macros]==================================*/
 

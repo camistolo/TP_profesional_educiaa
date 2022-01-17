@@ -25,15 +25,15 @@ typedef enum {
 } measurement_mode_t;
 
 // Constantes de la comunicacion
-#define BAUD_RATE 115200
-#define UART UART_232
+#define BAUD_RATE 		115200
+#define UART 			UART_232
 
 // Constantes de los pines
-#define DataPin 	ENET_TXEN
-#define ClockPin 	ENET_RXD1
+#define DataPin 		ENET_TXEN
+#define ClockPin 		ENET_RXD1
 
 // Constantes de los sensores de fuerza
-#define SCALE			11270 //17000
+#define SCALE			-23450 //-19214 //17000
 #define GAIN_128		24
 #define GAIN_64			25
 #define GAIN_32			26
@@ -41,7 +41,11 @@ typedef enum {
 #define AVERAGE_N		20
 
 // Cantidad de mediciones tomadas durante el salto
-#define JUMP_N		100
+#define JUMP_N			100
+
+// Constantes auxiliares
+#define GRAVITY						9.8
+#define FORCE_MEASUREMENT_PERIOD	0.02
 
 // Constantes de la periodicidad de las tareas
 #define TASK_RATE_1000_MS	1000
@@ -54,16 +58,15 @@ typedef enum {
 #define TASK_RATE_5_MS		5
 #define TASK_RATE_1_MS		1
 
-
-#define TASK_RATE_1000 pdMS_TO_TICKS(TASK_RATE_1000_MS)
-#define TASK_RATE_500 pdMS_TO_TICKS(TASK_RATE_500_MS)
-#define TASK_RATE_100 pdMS_TO_TICKS(TASK_RATE_100_MS)
-#define TASK_RATE_75 pdMS_TO_TICKS(TASK_RATE_75_MS)
-#define TASK_RATE_50 pdMS_TO_TICKS(TASK_RATE_50_MS)
-#define TASK_RATE_25 pdMS_TO_TICKS(TASK_RATE_25_MS)
-#define TASK_RATE_20 pdMS_TO_TICKS(TASK_RATE_20_MS)
-#define TASK_RATE_5 pdMS_TO_TICKS(TASK_RATE_5_MS)
-#define TASK_RATE_1 pdMS_TO_TICKS(TASK_RATE_1_MS)
+#define TASK_RATE_1000 		pdMS_TO_TICKS(TASK_RATE_1000_MS)
+#define TASK_RATE_500 		pdMS_TO_TICKS(TASK_RATE_500_MS)
+#define TASK_RATE_100 		pdMS_TO_TICKS(TASK_RATE_100_MS)
+#define TASK_RATE_75 		pdMS_TO_TICKS(TASK_RATE_75_MS)
+#define TASK_RATE_50 		pdMS_TO_TICKS(TASK_RATE_50_MS)
+#define TASK_RATE_25 		pdMS_TO_TICKS(TASK_RATE_25_MS)
+#define TASK_RATE_20 		pdMS_TO_TICKS(TASK_RATE_20_MS)
+#define TASK_RATE_5	 		pdMS_TO_TICKS(TASK_RATE_5_MS)
+#define TASK_RATE_1 		pdMS_TO_TICKS(TASK_RATE_1_MS)
 
 
 /*==================[definiciones de datos internos]=========================*/

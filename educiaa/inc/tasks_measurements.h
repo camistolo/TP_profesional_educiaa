@@ -5,6 +5,8 @@
 /*==================[inclusiones]============================================*/
 
 // Includes de FreeRTOS
+#include "tasks_force.h"
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
@@ -13,7 +15,6 @@
 #include "auxs.h"
 #include "tasks_wifi.h"
 #include "tasks_pressure.h"
-#include "tasks_force.h"
 
 /*==================[definiciones y macros]==================================*/
 
