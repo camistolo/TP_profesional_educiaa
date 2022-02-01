@@ -9,11 +9,11 @@
 #include "task.h"
 #include "semphr.h"
 #include "sapi.h"
-#include "FreeRTOSConfig.h"
-#include "auxs.h"
-#include "tasks_wifi.h"
-#include "tasks_pressure.h"
 #include <stdlib.h>
+#include "auxs.h"
+#include "FreeRTOSConfig.h"
+#include "tasks_pressure.h"
+#include "tasks_wifi.h"
 
 /*==================[definiciones y macros]==================================*/
 

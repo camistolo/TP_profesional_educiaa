@@ -13,11 +13,11 @@
 #include "task.h"
 #include "sapi.h"
 #include "semphr.h"
+#include <string.h>
+
+#include "FreeRTOSConfig.h"
 #include "tasks_force.h"
 #include "tasks_pressure.h"
-
-#include <string.h>
-#include "FreeRTOSConfig.h"
 
 /*==================[definiciones y macros]==================================*/
 #define LED_ERROR 		LEDR

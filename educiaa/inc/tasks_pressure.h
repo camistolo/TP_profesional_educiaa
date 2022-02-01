@@ -3,8 +3,9 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-#include "auxs.h"
 #include "sapi.h"
+
+#include "auxs.h"
 #include "FreeRTOSConfig.h"
 #include "semphr.h"
 
@@ -46,7 +47,7 @@
 #define demuxS3 GPIO7
 #define demuxSIG GPIO8
 
-#define UART_USED UART_USB
+//#define UART_USED UART_232
 #endif
 
 

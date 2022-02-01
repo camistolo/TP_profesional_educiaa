@@ -7,7 +7,7 @@ extern SemaphoreHandle_t sem_pressure_finished;
 extern TaskHandle_t TaskHandle_weight;
 extern TaskHandle_t TaskHandle_measurements;
 
-#define FRAME_MAX_SIZE  200
+//#define FRAME_MAX_SIZE  200
 
 typedef enum{
 	WEIGHT_MEAS = 1,

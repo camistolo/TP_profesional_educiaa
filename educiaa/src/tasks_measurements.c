@@ -45,6 +45,7 @@ void task_measurements( void* taskParmPtr )
 //	bool back_down = false;
 //	bool on_air = false;
 	int zeroed_newton;
+	//double zeroed_newton;
 	const double gravity = 9.8;
 
 	bool aux = false;
@@ -79,7 +80,9 @@ void task_measurements( void* taskParmPtr )
 					// Esto se puso para debuggear nada mas, pero en realidad aca se llamaria a la tarea
 					// task_calculate_jump_parameters para calcular la velocidad, tiempo, potencia y altura y
 					// despues se llamaria a las tareas de impresion.
+
 					create_task(print_matrix,"print_matrix",SIZE,0,1,NULL);
+
 					vTaskDelete(NULL);
 					//create_task(task_calculate_jump_parameters,"task_calculate_jump_parameters",SIZE,0,1,NULL);
 					//xQueueSend(queue_jump , jump_values,  portMAX_DELAY);
@@ -96,7 +99,8 @@ void task_measurements( void* taskParmPtr )
 
 				// Se calcula el valor de fuerza en Newtons pero se pone el cero en el valor del peso del usuario
 				// en Newton
-				zeroed_newton = ((double)(f) - (double)(PESO)) * gravity / SCALE;
+				//zeroed_newton = ((double)(f) - (double)(PESO)) * gravity / SCALE;
+				zeroed_newton = (int)(f);
 
 				// Enviar los valores de la fuerza a la cola queue_jump para dsps calcular los parametros
 				xQueueSend( queue_jump, &zeroed_newton, portMAX_DELAY);
@@ -174,10 +178,8 @@ void print_matrix( void* pvParameters )
 	int matrix_val;
 	int row=0, col=0;
 
-//	char buffer[700];
+	stdioPrintf(UART_USED, ">3{\"matrix\":["); // 3 to indicate pressure measurement.
 
-	stdioPrintf(UART_USB, "["); // 3 to indicate pressure measurement.
-	//sprintf(buffer, ">[");
 	// ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
 	{
@@ -185,28 +187,23 @@ void print_matrix( void* pvParameters )
 		{
 			if (col < (MAX_COL-1))
 			{
-				stdioPrintf(UART_USB, "%d,", matrix_val);
-				//sprintf(buffer, "%s%d,", buffer, matrix_val);
+				stdioPrintf(UART_USED, "%d,", matrix_val);
 				col++;
 			}else{
 				col = 0;
 				row++;
 				if (row < MAX_ROW)
 				{
-					stdioPrintf(UART_USB, "%d;", matrix_val);//stdioPrintf(UART_USED, "%d;\n", matrix_val);
-					//sprintf(buffer, "%s%d;", buffer, matrix_val);
+					stdioPrintf(UART_USED, "%d;", matrix_val);
 				}else{
-					stdioPrintf(UART_USB, "%d", matrix_val);
-					//sprintf(buffer, "%s%d", buffer, matrix_val);
+					stdioPrintf(UART_USED, "%d", matrix_val);
 				}
 			}
 		}else{
-			stdioPrintf(UART_USB, "]");
-			//sprintf(buffer, "%s]<\n", buffer);
+			stdioPrintf(UART_USED, "],");
 
-			//stdioPrintf(UART_USED, "%s", buffer);
-//			xSemaphoreGive(sem_matrix_print_finished);
-			create_task(task_receive_wifi,"task_receive_wifi",SIZE,0,1,NULL);
+			create_task(print_vector,"print_vector",SIZE,0,1,NULL);
+
 		    vTaskDelete(NULL);
 		}
 	}
@@ -217,29 +214,23 @@ void print_vector( void* pvParameters )
 	TickType_t xPeriodicity =  1000 / portTICK_RATE_MS;
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 
-	double zeroed_newton_val;
+	int zeroed_newton_val;
 	int index = 0;
 
-//	char buffer[700];
+	stdioPrintf(UART_USED, "\"vector\":[");
 
-	stdioPrintf(UART_USB, "\"vector\": ["); // 3 to indicate pressure measurement.
-	//sprintf(buffer, ">[");
+	//stdioPrintf(UART_USB, "print_vector \n");
 	// ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
 	{
-		if(xQueueReceive( queue_jump, &( zeroed_newton_val ), portMAX_DELAY)) // Dequeue matrix data
+		if(xQueueReceive( queue_jump, &( zeroed_newton_val ), (TickType_t) 10)) // Dequeue matrix data
 		{
-			if(index < JUMP_N)
-			{
-				stdioPrintf(UART_USB, "%d,", zeroed_newton_val);
-			}else{
-				stdioPrintf(UART_USB, "]<\n");
-				//sprintf(buffer, "%s]<\n", buffer);
-
-				//stdioPrintf(UART_USED, "%s", buffer);
-				xSemaphoreGive(sem_vector_print_finished);
-				vTaskDelete(NULL);
-			}
+			stdioPrintf(UART_USED, "%d,", zeroed_newton_val);
+			index ++;
+		}else{
+			stdioPrintf(UART_USED, "],");
+			create_task(print_parameters,"print_parameters",SIZE,0,1,NULL);
+			vTaskDelete(NULL);
 		}
 	}
 }
@@ -250,30 +241,35 @@ void print_parameters( void* pvParameters )
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 
 	struct jump_parameters jp;
-	int index = 0;
 
-//	char buffer[700];
-	//sprintf(buffer, ">[");
+	char vel_aux[20] = {};
+	char t_aux[20] = {};
+	char height_aux[20] = {};
+	char power_aux[20] = {};
+
+	// test values for struct:
+	jp.vel = 2.6;
+	jp.t = 1.3;
+	jp.height = 0.5;
+	jp.power = 5.6;
+
 	// ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
 	{
-		if(xQueueReceive( queue_jump_parameters, &( jp ), portMAX_DELAY)) // Dequeue matrix data
-		{
-			stdioPrintf(UART_USED, "\"velocidad\": ["); // 3 to indicate pressure measurement.
-			stdioPrintf(UART_USED, "%d \n,", jp.vel);
-			stdioPrintf(UART_USED, "\"tiempo\": [");
-			stdioPrintf(UART_USED, "%d \n,", jp.t);
-			stdioPrintf(UART_USED, "\"altura\": [");
-			stdioPrintf(UART_USED, "%d \n,", jp.height);
-			stdioPrintf(UART_USED, "\"potencia\": [");
-			stdioPrintf(UART_USED, "%d \n,", jp.power);
-			stdioPrintf(UART_USED, "]<\n");
-			//sprintf(buffer, "%s]<\n", buffer);
+		//if(xQueueReceive( queue_jump_parameters, &( jp ), (TickType_t) 10)) // Dequeue matrix data
+		//{
 
-			//stdioPrintf(UART_USED, "%s", buffer);
-			xSemaphoreGive(sem_parameters_print_finished);
+			gcvt(jp.vel, 10, vel_aux);
+			gcvt(jp.t, 10, t_aux);
+			gcvt(jp.height, 10, height_aux);
+			gcvt(jp.power, 10, power_aux);
+
+			stdioPrintf(UART_USED, "\"speed\":%s,\"power\":%s,\"time\":%s,\"height\":%s}<\n", vel_aux, power_aux, t_aux, height_aux);
+
+			create_task(task_receive_wifi,"task_receive_wifi",SIZE,0,1,NULL);
+
 			vTaskDelete(NULL);
-		}
+		//}
 	}
 }
 

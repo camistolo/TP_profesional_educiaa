@@ -9,12 +9,13 @@
 #include "task.h"
 #include "semphr.h"
 #include "sapi.h"
-#include "FreeRTOSConfig.h"
-#include "auxs.h"
-#include "tasks_force.h"
 #include <string.h>
-#include "tasks_pressure.h"
+
+#include "auxs.h"
+#include "FreeRTOSConfig.h"
+#include "tasks_force.h"
 #include "tasks_measurements.h"
+#include "tasks_pressure.h"
 
 /*==================[definiciones y macros]==================================*/
 

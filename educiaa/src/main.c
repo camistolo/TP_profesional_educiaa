@@ -55,6 +55,7 @@ int main( void )
     create_queue(&queue_force,1,sizeof(unsigned long));
     create_queue(&queue_force_average,1,sizeof(unsigned long));
     create_queue(&queue_jump,JUMP_N,sizeof(int));
+    //create_queue(&queue_jump,JUMP_N,sizeof(double));
     create_queue(&queue_jump_parameters,1,sizeof(struct jump_parameters));
     create_queue(&queue_command_wifi,1,sizeof(int));
     create_queue(&xMeasurePressureQueue,1,sizeof(int[2]));
