@@ -286,6 +286,8 @@ void task_weight( void* taskParmPtr )
 			uartWriteString(UART_USB,str_aux);
 			uartWriteString(UART_USB, fl_str_aux);
 
+			stdioPrintf(UART_USED, ">1%s<\n",fl_str_aux);
+
 			// Se crea la tarea que recibe un comando por wifi
 			create_task(task_receive_wifi,"task_receive_wifi",SIZE,0,1,NULL);
 
