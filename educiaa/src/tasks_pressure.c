@@ -1,174 +1,110 @@
+/*=============================================================================
+ * Copyright (c) 2022, Brian Landler <blandler@fi.uba.ar>,
+ * Camila Stolowicz <cstolowicz@fi.uba.ar>, Martin Bergler <mbergler@fi.uba.ar>
+ * All rights reserved.
+ * License: Free
+ * Date: 2022/02/02
+ * Version: v1.0
+ *===========================================================================*/
 #include "tasks_pressure.h"
 
-QueueHandle_t xMeasurePressureQueue;
-QueueHandle_t xPrintQueue;
+/*=========================[declaracion de variables]========================*/
+
+QueueHandle_t queue_measure_pressure;
+QueueHandle_t queue_print;
 SemaphoreHandle_t sem_pressure_index;
 SemaphoreHandle_t sem_pressure_finished;
 TaskHandle_t TaskHandle_set_matrix_index;
 TaskHandle_t TaskHandle_get_pressure_value;
 
-void set_matrix_index( void* pvParameters )
-{
+/*=========================[declaracion de funciones]=========================*/
 
-    TickType_t xPeriodicity =  100 / portTICK_RATE_MS;
+// Tarea que setea los indices de la celda de la matriz que tiene que ser medida
+// y se los envia (mediante la cola queue_measure_pressure) a la tarea
+// task_get_pressure_value
+void task_set_matrix_index( void* pvParameters )
+{
+    TickType_t xPeriodicity =  RATE_100;
     TickType_t xLastWakeTime = xTaskGetTickCount();
 
-    int row = 0;
-    int col = -1;
-    int index[2] = {row, col};
+    uint8_t row = 0;
+    uint8_t col = -1;
+    uint8_t index[2] = {row, col};
 
-    // ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
 	{
 		if (xSemaphoreTake(sem_pressure_index, portMAX_DELAY))
 		{
+			// Si todavia no se llego a la ultima columna, se aumenta la columna
 			if(col < MAX_COL-1)
 			{
 				col++;
-			}else{ // col == MAX_COL
+			} else // Si se llego a la ultima columna, se reinicia la columna y se aumenta la fila
+			{
 				row ++;
 				col = 0;
 			}
 
+			// Se setea el indice y se envia a traves de la cola queue_measure_pressure a la tarea
+			// task_get_pressure_value
 			index[0] = row;
 			index[1] = col;
 
-			xQueueSend( xMeasurePressureQueue, ( void * ) &index, portMAX_DELAY );
+			xQueueSend( queue_measure_pressure, &index, portMAX_DELAY );
 		}
+		// Delay periodico
+		vTaskDelayUntil( &xLastWakeTime , xPeriodicity );
 	}
 }
 
-void get_pressure_value( void* pvParameters )
+// Tarea que recibe un indice y lee el valor de presion de la celda correspondiente
+// a ese indice. El valor de presion se envia a la cola queue_print
+void task_get_pressure_value( void* pvParameters )
 {
-
-    TickType_t xPeriodicity =  1000 / portTICK_RATE_MS;
+    TickType_t xPeriodicity =  RATE_100;
     TickType_t xLastWakeTime = xTaskGetTickCount();
 
-    int sensor_value = 1;
-	// ****************************
-	// Sin PCB:
-	#ifdef SENSOR
-	int sensor_in[MAX_ROW] = {demuxY0, demuxY1, demuxY2, demuxY3, demuxY4, demuxY5, demuxY6, demuxY7, demuxY8, demuxY9, demuxY10, demuxY11, demuxY12, demuxY13};
-	#endif
+    uint16_t sensor_value = 1;
+	uint8_t row,col;
+	uint8_t index[2];
 
-	int row,col;
-	int index[2];
-
-	// ---------- REPEAT FOR EVER --------------------------
 	while( TRUE )
 	{
-		if(xQueueReceive( xMeasurePressureQueue, &( index ), portMAX_DELAY))
+		if(xQueueReceive( queue_measure_pressure, &( index ), portMAX_DELAY))
 		{
-//			stdioPrintf(UART_USB, "%d, %d\n", index[0], index[1]);
-
 			row = index[0];
 			col = index[1];
 
-			// Finished to Read all matrix values:
+			// Si se llega al final de la matriz, se eliminan las tareas de presion
+			// y se envia un semaforo indicando que la medicion se completo
 			if (row == MAX_ROW)
 			{
-				uartWriteString(UART_USB, "pressure_done\n");
-//				xTaskCreate(
-//					print_matrix,					// Function of the task to execute
-//					( const char * )"print_matrix", // Name of the task, as a user friendly string
-//					configMINIMAL_STACK_SIZE*2,   	// Stack quantity of the task
-//					0,                            	// Task parameters
-//					tskIDLE_PRIORITY+1,           	// Task priority
-//					0                             	// Pointer to the task created in the system
-//				);
-//
 				xSemaphoreGive( sem_pressure_finished );
 				vTaskDelete(TaskHandle_set_matrix_index);
 				vTaskDelete(NULL);
 			}
 
-			#ifdef SENSOR
-			gpioWrite( sensor_in[row], HIGH );
-
-			gpioWrite( muxS0, col & 1 );
-			gpioWrite( muxS1, (col >> 1) & 1 );
-			gpioWrite( muxS2, (col >> 2) & 1 );
-			gpioWrite( muxS3, (col >> 3) & 1 );
-
-			sensor_value = adcRead(muxSIG);
-			gpioWrite( sensor_in[row], LOW );
-			#endif
-
-			#ifdef SENSOR_PCB
+			// Se setean la fila y columna correspondientes y se lee el valor
 			SetDeMuxChannel(row);
 			gpioWrite( demuxSIG, HIGH );
 			SetMuxChannel(col);
 			sensor_value = adcRead(muxSIG);
 			gpioWrite(demuxSIG, LOW);
-			#endif
 
-//			stdioPrintf(UART_USB, "%d\t", sensor_value);
+			// Se encola el valor de presion de la celda en queue_print
+			xQueueSend( queue_print, &sensor_value, portMAX_DELAY );
 
-			xQueueSendToBack( xPrintQueue, ( void * ) &sensor_value, portMAX_DELAY ); // Enqueue matrix data
-
-			#ifdef SENSOR_TEST
-			sensor_value++;
-			if (col == MAX_COL-1)
-			{
-				sensor_value = 1;
-			}
-
-			#endif
-
+			// Se pide un indice diferente a traves de la liberacion del semaforo
+			// sem_pressure_index
 			xSemaphoreGive( sem_pressure_index );
 		}
+		// Delay periodico
+		vTaskDelayUntil( &xLastWakeTime , xPeriodicity );
 	}
 }
 
-//void print_matrix( void* pvParameters )
-//{
-//	TickType_t xPeriodicity =  1000 / portTICK_RATE_MS;
-//	TickType_t xLastWakeTime = xTaskGetTickCount();
-//
-//	int row_value;
-//	int matrix_val;
-//	int row=0, col=0;
-//
-//	char buffer[700];
-//
-//	stdioPrintf(UART_USED, ">3["); // 3 to indicate pressure measurement.
-//	//sprintf(buffer, ">[");
-//	// ---------- REPEAT FOR EVER --------------------------
-//	while( TRUE )
-//	{
-//
-//		if(xQueueReceive( xPrintQueue, &( matrix_val ), portMAX_DELAY)) // Dequeue matrix data
-//		{
-//			if (col < (MAX_COL-1))
-//			{
-//				stdioPrintf(UART_USED, "%d,", matrix_val);
-//				//sprintf(buffer, "%s%d,", buffer, matrix_val);
-//				col++;
-//			}else{
-//				col = 0;
-//				row++;
-//				if (row < MAX_ROW)
-//				{
-//					stdioPrintf(UART_USED, "%d;", matrix_val);//stdioPrintf(UART_USED, "%d;\n", matrix_val);
-//					//sprintf(buffer, "%s%d;", buffer, matrix_val);
-//				}else{
-//					stdioPrintf(UART_USED, "%d", matrix_val);
-//					//sprintf(buffer, "%s%d", buffer, matrix_val);
-//				}
-//			}
-//		}else{
-//			stdioPrintf(UART_USED, "]<\n");
-//			//sprintf(buffer, "%s]<\n", buffer);
-//
-//			//stdioPrintf(UART_USED, "%s", buffer);
-//
-//		   vTaskDelete(NULL);
-//		}
-//	}
-//}
-
-#ifndef SENSOR_TEST
-void SetMuxChannel(int channel)
+// Funcion que setea la columna a leer
+void SetMuxChannel(uint8_t channel)
 {
 	gpioWrite( muxS0, channel & 1 );
 	gpioWrite( muxS1, (channel >> 1) & 1 );
@@ -176,13 +112,13 @@ void SetMuxChannel(int channel)
 	gpioWrite( muxS3, (channel >> 3) & 1 );
 }
 
-void SetDeMuxChannel(int channel)
+// Funcion que setea la fila a leer
+void SetDeMuxChannel(uint8_t channel)
 {
 	gpioWrite( demuxS0, channel & 1 );
 	gpioWrite( demuxS1, (channel >> 1) & 1 );
 	gpioWrite( demuxS2, (channel >> 2) & 1 );
 	gpioWrite( demuxS3, (channel >> 3) & 1 );
 }
-#endif
 
-/*==================[end of file]============================================*/
+/*=========================[fin del archivo]=================================*/

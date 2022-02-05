@@ -1,40 +1,36 @@
-/*===========================================================================*/
+/*=============================================================================
+ * Copyright (c) 2022, Brian Landler <blandler@fi.uba.ar>,
+ * Camila Stolowicz <cstolowicz@fi.uba.ar>, Martin Bergler <mbergler@fi.uba.ar>
+ * All rights reserved.
+ * License: Free
+ * Date: 2022/02/02
+ * Version: v1.0
+ *===========================================================================*/
 #ifndef _TASKS_WIFI_H_
 #define _TASKS_WIFI_H_
 
 /*==================[inclusiones]============================================*/
 
-// Includes de FreeRTOS
-#include "FreeRTOS.h"
-#include "task.h"
-#include "semphr.h"
-#include "sapi.h"
-#include <string.h>
-
 #include "auxs.h"
+#include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
+#include "sapi.h"
+#include "semphr.h"
+#include "task.h"
 #include "tasks_force.h"
-#include "tasks_measurements.h"
+#include "tasks_jump.h"
 #include "tasks_pressure.h"
 
-/*==================[definiciones y macros]==================================*/
+/*====================[definicion de variables y macros]=====================*/
 
-/*==================[definiciones de datos internos]=========================*/
-
+// Comunicacion Wifi
 #define FRAME_MAX_SIZE  4
 #define UART_USED 		UART_232
+#define BAUD_RATE 		115200
 
-/*==================[definiciones de datos externos]=========================*/
+/*=========================[definicion de funciones]=========================*/
 
-/*==================[declaraciones de funciones internas]====================*/
-
-/*==================[declaraciones de funciones externas]====================*/
-
-// Prototipo de funcion de la tarea
 void task_receive_wifi( void* pvParameters );
 void task_choose_measurement( void* pvParameters );
-
-
-void format( float valor, char *dst, uint8_t pos );
 
 #endif /* _TASKS_WIFI_H_ */

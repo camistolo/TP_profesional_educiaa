@@ -6,8 +6,8 @@
  * Date: 2022/02/02
  * Version: v1.0
  *===========================================================================*/
-#ifndef _MAIN_H_
-#define _MAIN_H_
+#ifndef _TASKS_JUMP_H_
+#define _TASKS_JUMP_H_
 
 /*==================[inclusiones]============================================*/
 
@@ -18,9 +18,15 @@
 #include "semphr.h"
 #include "task.h"
 #include "tasks_force.h"
-#include "tasks_jump.h"
 #include "tasks_pressure.h"
 #include "tasks_wifi.h"
 
-#endif /* _MAIN_H_ */
+/*=========================[definicion de funciones]=========================*/
 
+void task_measure_jump( void* taskParmPtr );
+void task_print_matrix( void* taskParmPtr );
+void task_print_vector( void* taskParmPtr );
+void task_print_parameters( void* taskParmPtr );
+void task_calculate_jump_parameters( void* taskParmPtr );
+
+#endif /* _TASKS_JUMP_H_ */

@@ -1,67 +1,60 @@
+/*=============================================================================
+ * Copyright (c) 2022, Brian Landler <blandler@fi.uba.ar>,
+ * Camila Stolowicz <cstolowicz@fi.uba.ar>, Martin Bergler <mbergler@fi.uba.ar>
+ * All rights reserved.
+ * License: Free
+ * Date: 2022/02/02
+ * Version: v1.0
+ *===========================================================================*/
 #include "main.h"
 
-DEBUG_PRINT_ENABLE;
+/*==================[definiciones de datos externos]=========================*/
 
-//Handle de la cola
+// Handles de las colas
 extern QueueHandle_t queue_force;
 extern QueueHandle_t queue_force_average;
 extern QueueHandle_t queue_jump;
 extern QueueHandle_t queue_command_wifi;
-extern SemaphoreHandle_t sem_measure_force;
 extern QueueHandle_t queue_jump_parameters;
+extern QueueHandle_t queue_measure_pressure;
+extern QueueHandle_t queue_print;
 
-extern QueueHandle_t xMeasurePressureQueue;
-extern QueueHandle_t xPrintQueue;
+// Handles de los semaforos
+extern SemaphoreHandle_t sem_measure_force;
 extern SemaphoreHandle_t sem_pressure_index;
 extern SemaphoreHandle_t sem_pressure_finished;
-
 extern SemaphoreHandle_t sem_matrix_print_finished;
 extern SemaphoreHandle_t sem_vector_print_finished;
 extern SemaphoreHandle_t sem_parameters_print_finished;
 
-/*==================[declaraciones de funciones internas]====================*/
-
-/*==================[declaraciones de funciones externas]====================*/
-
-/*==================[definiciones de datos internos]=========================*/
-
-extern volatile unsigned long OFFSET;
-
 /*==================[funcion principal]======================================*/
 
-// FUNCION PRINCIPAL, PUNTO DE ENTRADA AL PROGRAMA LUEGO DE ENCENDIDO O RESET.
+// Funcion principal, punto de entrada luego de encendido o reset
 int main( void )
 {
     // ---------- CONFIGURACIONES ------------------------------
-    // Inicializar y configurar la plataforma
+
+    // Inicializacion y configuracion de la plataforma
     boardConfig();
 
-    gpioInit(ClockPin, GPIO_OUTPUT);
-	gpioInit(DataPin, GPIO_INPUT);
-
+	// Inicializacion del ADC
     adcConfig( ADC_ENABLE );
 
-    // UART for debug messages
-    debugPrintConfigUart( UART_USB, BAUD_RATE );
-    debugPrintlnString( "TP Profesional." );
-    uartConfig(UART_232, BAUD_RATE);
+    // Configuracion de la UART
+    uartConfig(UART_USED, BAUD_RATE);
 
     gpio_config();
 
-    // Led para dar señal de vida
-    gpioWrite( LED3, ON );
-
-    // Creación de las colas
-    create_queue(&queue_force,1,sizeof(unsigned long));
-    create_queue(&queue_force_average,1,sizeof(unsigned long));
-    create_queue(&queue_jump,JUMP_N,sizeof(int));
-    //create_queue(&queue_jump,JUMP_N,sizeof(double));
+    // Creacion de las colas
+    create_queue(&queue_force,1,sizeof(uint32_t));
+    create_queue(&queue_force_average,1,sizeof(uint32_t));
+    create_queue(&queue_jump,JUMP_N,sizeof(uint16_t));
     create_queue(&queue_jump_parameters,1,sizeof(struct jump_parameters));
-    create_queue(&queue_command_wifi,1,sizeof(int));
-    create_queue(&xMeasurePressureQueue,1,sizeof(int[2]));
-    create_queue(&xPrintQueue,196,sizeof(int)); // MAX_ROW * MAX_COL = 196
+    create_queue(&queue_command_wifi,1,sizeof(uint8_t));
+    create_queue(&queue_measure_pressure,1,sizeof(uint8_t[2]));
+    create_queue(&queue_print,196,sizeof(uint16_t)); // MAX_ROW * MAX_COL = 196
 
-    // Creación del semáforo
+    // Creacion de los semaforos
     create_semaphore(&sem_measure_force);
     create_semaphore(&sem_pressure_index);
     create_semaphore(&sem_pressure_finished);
@@ -69,8 +62,8 @@ int main( void )
     create_semaphore(&sem_vector_print_finished);
     create_semaphore(&sem_parameters_print_finished);
 
-    // Creación y validacion de las tareas
-	create_task(task_tare,"task_tare",SIZE,0,1,NULL);
+    // Creacion y validacion de la tarea de tara
+	create_task(task_tare,"task_tare",BASE_SIZE,0,1,NULL);
 
     // Iniciar scheduler
     vTaskStartScheduler();
@@ -82,9 +75,6 @@ int main( void )
         // Si cae en este while 1 significa que no pudo iniciar el scheduler
     }
 
-    // NO DEBE LLEGAR NUNCA AQUI, debido a que a este programa se ejecuta
-    // directamente, no sobre un microcontrolador y no es llamado por ningun
-    // Sistema Operativo, como en el caso de un programa para PC.
     return 0;
 }
 
