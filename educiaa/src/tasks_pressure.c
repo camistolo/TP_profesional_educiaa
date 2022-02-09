@@ -11,7 +11,7 @@
 /*=========================[declaracion de variables]========================*/
 
 QueueHandle_t queue_measure_pressure;
-QueueHandle_t queue_print;
+QueueHandle_t queue_matrix;
 SemaphoreHandle_t sem_pressure_index;
 SemaphoreHandle_t sem_pressure_finished;
 TaskHandle_t TaskHandle_set_matrix_index;
@@ -92,7 +92,7 @@ void task_get_pressure_value( void* pvParameters )
 			gpioWrite(demuxSIG, LOW);
 
 			// Se encola el valor de presion de la celda en queue_print
-			xQueueSend( queue_print, &sensor_value, portMAX_DELAY );
+			xQueueSend( queue_matrix, &sensor_value, portMAX_DELAY );
 
 			// Se pide un indice diferente a traves de la liberacion del semaforo
 			// sem_pressure_index

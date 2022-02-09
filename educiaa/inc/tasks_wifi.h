@@ -32,5 +32,10 @@
 
 void task_receive_wifi( void* pvParameters );
 void task_choose_measurement( void* pvParameters );
+void task_print_weight( void* taskParmPtr );
+void task_print_matrix( void* taskParmPtr );
+void task_print_vector( void* taskParmPtr );
+void task_print_parameters( void* taskParmPtr );
+void task_calculate_jump_parameters( void* taskParmPtr );
 
 #endif /* _TASKS_WIFI_H_ */

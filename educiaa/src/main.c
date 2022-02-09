@@ -12,12 +12,13 @@
 
 // Handles de las colas
 extern QueueHandle_t queue_force;
-extern QueueHandle_t queue_force_average;
-extern QueueHandle_t queue_jump;
+extern QueueHandle_t queue_median;
+extern QueueHandle_t queue_jump_force;
 extern QueueHandle_t queue_command_wifi;
 extern QueueHandle_t queue_jump_parameters;
 extern QueueHandle_t queue_measure_pressure;
-extern QueueHandle_t queue_print;
+extern QueueHandle_t queue_matrix;
+extern QueueHandle_t queue_weight;
 
 // Handles de los semaforos
 extern SemaphoreHandle_t sem_measure_force;
@@ -47,12 +48,13 @@ int main( void )
 
     // Creacion de las colas
     create_queue(&queue_force,1,sizeof(uint32_t));
-    create_queue(&queue_force_average,1,sizeof(uint32_t));
-    create_queue(&queue_jump,JUMP_N,sizeof(uint16_t));
+    create_queue(&queue_median,1,sizeof(uint32_t));
+    create_queue(&queue_jump_force,JUMP_N,sizeof(uint16_t));
     create_queue(&queue_jump_parameters,1,sizeof(struct jump_parameters));
     create_queue(&queue_command_wifi,1,sizeof(uint8_t));
     create_queue(&queue_measure_pressure,1,sizeof(uint8_t[2]));
-    create_queue(&queue_print,196,sizeof(uint16_t)); // MAX_ROW * MAX_COL = 196
+    create_queue(&queue_matrix,196,sizeof(uint16_t)); // MAX_ROW * MAX_COL = 196
+    create_queue(&queue_weight,1,sizeof(double));
 
     // Creacion de los semaforos
     create_semaphore(&sem_measure_force);

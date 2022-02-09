@@ -11,14 +11,12 @@
 /*=========================[declaracion de variables]========================*/
 
 extern uint32_t OFFSET;
-extern uint32_t PESO;
+extern uint32_t WEIGHT;
 
 QueueHandle_t queue_jump_parameters;
-QueueHandle_t queue_print;
-QueueHandle_t queue_test;
+QueueHandle_t queue_matrix;
 extern QueueHandle_t queue_force;
-extern QueueHandle_t queue_jump;
-extern QueueHandle_t queue_print;
+extern QueueHandle_t queue_jump_force;
 
 SemaphoreHandle_t sem_matrix_print_finished;
 SemaphoreHandle_t sem_vector_print_finished;
@@ -90,10 +88,10 @@ void task_measure_jump( void* taskParmPtr )
 
 				// Se calcula el valor de fuerza en Newtons pero se pone el cero en el valor del peso del usuario
 				// en Newton
-				zeroed_newton = ((int16_t)f - (int16_t)PESO) * GRAVITY / SCALE;
+				zeroed_newton = ((int16_t)f - (int16_t)WEIGHT) * GRAVITY / SCALE;
 
 				// Se envia el valor de la fuerza a la cola queue_jump para dsps calcular los parametros
-				xQueueSend( queue_jump, &zeroed_newton, portMAX_DELAY);
+				xQueueSend( queue_jump_force , &zeroed_newton, portMAX_DELAY);
 			}
 		}
 
@@ -114,13 +112,13 @@ void task_calculate_jump_parameters( void* taskParmPtr )
 	bool on_air = false;
 	uint8_t time_on_air = 0;
 	struct jump_parameters jp;
-	const double weight = ((double)(PESO) - (double)(OFFSET)) / (double)SCALE;
+	const double weight = ((double)(WEIGHT) - (double)(OFFSET)) / (double)SCALE;
 	uint16_t zeroed_newton;
 
 	while ( TRUE )
 	{
 		// Se hace un peek para que los valores se reciban despues para imprimirse por wifi
-		if(xQueuePeek(queue_jump , &zeroed_newton,  portMAX_DELAY)){
+		if(xQueuePeek(queue_jump_force , &zeroed_newton,  portMAX_DELAY)){
 			// Etapa 0: todavia no empezo el salto
 			if (accelerating_downards == false) {
 				// Si se nota un valor en Newton menor a -20 (es como decir menor a 0, pero
@@ -158,6 +156,9 @@ void task_calculate_jump_parameters( void* taskParmPtr )
 					jp.height = (jp.vel * jp.vel)/ (2 * GRAVITY);
 					jp.power = jp.vel * weight * GRAVITY;
 
+					// Se envian los parametros del salto a traves de la cola queue_jump_parameters para imprimirlos
+					xQueueSend( queue_jump_parameters , &jp , portMAX_DELAY);
+
 					create_task(task_print_matrix,"task_print_matrix",BASE_SIZE,0,1,NULL);
 					vTaskDelete(NULL);
 				}
@@ -165,95 +166,6 @@ void task_calculate_jump_parameters( void* taskParmPtr )
 		}
 		// Delay periodico
 		vTaskDelayUntil( &xLastWakeTime , xPeriodicity );
-	}
-}
-
-// Tarea que envia al modulo wifi la matriz de valores de presion
-void task_print_matrix( void* pvParameters )
-{
-	TickType_t xPeriodicity =  RATE_1000;
-	TickType_t xLastWakeTime = xTaskGetTickCount();
-
-	uint16_t matrix_val;
-	uint8_t row=0, col=0;
-
-	// El numero 2 le indica al modulo wifi que es una medicion de salto
-	stdioPrintf(UART_USED, ">2{\"matrix\":[");
-
-	while( TRUE )
-	{
-		// Impresion de la matriz, a medida que se reciben los valores
-		if(xQueueReceive( queue_print, &( matrix_val ), RATE_20))
-		{
-			if (col < (MAX_COL-1))
-			{
-				stdioPrintf(UART_USED, "%d,", matrix_val);
-				col++;
-			}else{
-				col = 0;
-				row++;
-				if (row < MAX_ROW)
-				{
-					stdioPrintf(UART_USED, "%d;", matrix_val);
-				}else{
-					stdioPrintf(UART_USED, "%d", matrix_val);
-				}
-			}
-		}else{	// Fin de impresion de la matriz, se crea la tarea de impresion del vector
-			stdioPrintf(UART_USED, "],");
-
-			create_task(task_print_vector,"task_print_vector",BASE_SIZE,0,1,NULL);
-
-		    vTaskDelete(NULL);
-		}
-	}
-}
-
-// Tarea que envia al modulo wifi el vector de valores de fuerza durante el salto
-void task_print_vector( void* pvParameters )
-{
-	TickType_t xPeriodicity =  RATE_1000;
-	TickType_t xLastWakeTime = xTaskGetTickCount();
-
-	uint16_t zeroed_newton_val;
-	uint8_t index = 0;
-
-	stdioPrintf(UART_USED, "\"vector\":[");
-
-	while( TRUE )
-	{
-		// Impresion del vector, a medida que se reciben los valores
-		if(xQueueReceive( queue_jump, &( zeroed_newton_val ), (TickType_t) 10)) // Dequeue matrix data
-		{
-			stdioPrintf(UART_USED, "%d,", zeroed_newton_val);
-			index ++;
-		}else{	// Fin de impresion del vector, se crea la tarea de impresion del vector
-			stdioPrintf(UART_USED, "],");
-			create_task(task_print_parameters,"task_print_parameters",BASE_SIZE,0,1,NULL);
-			vTaskDelete(NULL);
-		}
-	}
-}
-
-// Tarea que envia al modulo wifi los parametros del salto
-void task_print_parameters( void* pvParameters )
-{
-	TickType_t xPeriodicity =  1000 / portTICK_RATE_MS;
-	TickType_t xLastWakeTime = xTaskGetTickCount();
-
-	struct jump_parameters jp;
-
-	while( TRUE )
-	{
-		// Se recibe la estructura con los parametros y se envian al modulo wifi
-		if(xQueueReceive( queue_jump_parameters, &( jp ), RATE_20))
-		{
-			stdioPrintf(UART_USED, "\"speed\":%d,\"power\":%d,\"time\":%d,\"height\":%d}<\n", jp.vel, jp.power, jp.t, jp.height);
-
-			// Se crea la tarea que recibe el comando por wifi
-			create_task(task_receive_wifi,"task_receive_wifi",BASE_SIZE,0,1,NULL);
-			vTaskDelete(NULL);
-		}
 	}
 }
 

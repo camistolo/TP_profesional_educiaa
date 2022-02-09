@@ -25,8 +25,5 @@
 
 void task_measure_jump( void* taskParmPtr );
 void task_print_matrix( void* taskParmPtr );
-void task_print_vector( void* taskParmPtr );
-void task_print_parameters( void* taskParmPtr );
-void task_calculate_jump_parameters( void* taskParmPtr );
 
 #endif /* _TASKS_JUMP_H_ */

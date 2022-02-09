@@ -11,18 +11,21 @@
 /*=========================[declaracion de variables]========================*/
 
 QueueHandle_t queue_force;
-QueueHandle_t queue_force_average;
-QueueHandle_t queue_jump;
+QueueHandle_t queue_median;
+QueueHandle_t queue_jump_force;
+QueueHandle_t queue_weight;
+
 SemaphoreHandle_t sem_measure_force;
 
 uint32_t OFFSET = 10000000;
-uint32_t PESO = 0;
+uint32_t WEIGHT = 0;
 
 TaskHandle_t TaskHandle_check_hx711_is_ready;
 TaskHandle_t TaskHandle_measure_force;
 TaskHandle_t TaskHandle_average_force;
 TaskHandle_t TaskHandle_calculate_median;
 TaskHandle_t TaskHandle_measure_weight;
+extern TaskHandle_t TaskHandle_print_weight;
 
 /*=========================[declaracion de funciones]=========================*/
 
@@ -121,7 +124,7 @@ void task_calculate_median( void* taskParmPtr )
 				median = f_values[counter/2];
 				// Se envia el valor a traves de queue_force_average y se elimnan las tareas
 				// de medicion de fuerza
-				xQueueSend(queue_force_average , &median,  portMAX_DELAY);
+				xQueueSend(queue_median , &median,  portMAX_DELAY);
 				vTaskDelete(TaskHandle_measure_force);
 				vTaskDelete(NULL);
 			}
@@ -157,7 +160,7 @@ void task_tare( void* taskParmPtr )
 	{
 		// Si se recibe el valor de fuerza ya procesado por el calculo de la mediana,
 		// se lo guarda en la variable global OFFSET
-		if(xQueueReceive(queue_force_average , &offset,  portMAX_DELAY)){
+		if(xQueueReceive(queue_median , &offset,  portMAX_DELAY)){
 			OFFSET = offset;
 
 			// Se crea la tarea que recibe un comando por wifi
@@ -180,20 +183,21 @@ void task_measure_weight( void* taskParmPtr )
 	create_task(task_check_hx711_is_ready,"task_check_hx711_is_ready",BASE_SIZE,0,1,&TaskHandle_check_hx711_is_ready);
 
 	uint32_t fu = 0;
-	double p;
+	double weight_kg;
 
 	while ( TRUE )
 	{
 		// Si se recibe el valor del peso, ya procesado con la mediana, se lo guarda
 		// en la variable global peso y se toma ese valor para calcular el peso en kg
-		if(xQueueReceive(queue_force_average , &fu,  portMAX_DELAY)){
+		if(xQueueReceive(queue_median , &fu,  portMAX_DELAY)){
 
-			PESO = fu;
+			WEIGHT = fu;
 
-			p = ((double)fu - (double)OFFSET) / SCALE;
+			weight_kg = ((double)fu - (double)OFFSET) / SCALE;
 
-			// Se crea la tarea que recibe un comando por wifi
-			create_task(task_receive_wifi,"task_receive_wifi",BASE_SIZE,0,1,NULL);
+			// Se crea la tarea que envia el peso por wifi
+			create_task(task_print_weight,"task_print_weight",BASE_SIZE,0,1,&TaskHandle_print_weight);
+			xQueueSend(queue_weight , &weight_kg,  portMAX_DELAY);
 
 			vTaskDelete(NULL);
 		}
