@@ -21,9 +21,30 @@
 #include "tasks_pressure.h"
 #include "tasks_wifi.h"
 
+/*====================[definicion de variables y macros]=====================*/
+
+// Estructura de parametros del salto
+struct jump_parameters {
+	double vel;
+	double t;
+	double height;
+	double power;
+};
+
+// Cantidad de mediciones tomadas durante el salto
+#define JUMP_N			100
+
+// Constantes auxiliares
+#define GRAVITY						9.8
+#define FORCE_MEASUREMENT_PERIOD_MS	20
+
+#define DOWNWARD_ACCELERATION_THRESHOLD -20
+#define DEACCELERATION_THRESHOLD		5
+#define ON_AIR_THRESHOLD				0
+
 /*=========================[definicion de funciones]=========================*/
 
 void task_measure_jump( void* taskParmPtr );
-void task_print_matrix( void* taskParmPtr );
+void task_calculate_jump_parameters( void* taskParmPtr );
 
 #endif /* _TASKS_JUMP_H_ */

@@ -24,11 +24,11 @@ TaskHandle_t TaskHandle_get_pressure_value;
 // task_get_pressure_value
 void task_set_matrix_index( void* pvParameters )
 {
-    TickType_t xPeriodicity =  RATE_100;
+    TickType_t xPeriodicity =  RATE_1;
     TickType_t xLastWakeTime = xTaskGetTickCount();
 
     uint8_t row = 0;
-    uint8_t col = -1;
+    uint8_t col = MAX_COL*2;
     uint8_t index[2] = {row, col};
 
 	while( TRUE )
@@ -41,8 +41,17 @@ void task_set_matrix_index( void* pvParameters )
 				col++;
 			} else // Si se llego a la ultima columna, se reinicia la columna y se aumenta la fila
 			{
-				row ++;
-				col = 0;
+				if (col != MAX_COL*2)
+				{
+					row ++;
+					col = 0;
+				}else{
+					// Para inicializar el valor de col para la primera fila, ya que
+					// el tipo de dato es uint8_t y si se pone como -1 en la inicializacion
+					// empieza en la fila 1 en vez de la fila 0.
+					row = 0;
+					col = 0;
+				}
 			}
 
 			// Se setea el indice y se envia a traves de la cola queue_measure_pressure a la tarea
@@ -61,7 +70,7 @@ void task_set_matrix_index( void* pvParameters )
 // a ese indice. El valor de presion se envia a la cola queue_print
 void task_get_pressure_value( void* pvParameters )
 {
-    TickType_t xPeriodicity =  RATE_100;
+    TickType_t xPeriodicity =  RATE_1;
     TickType_t xLastWakeTime = xTaskGetTickCount();
 
     uint16_t sensor_value = 1;
@@ -81,7 +90,8 @@ void task_get_pressure_value( void* pvParameters )
 			{
 				xSemaphoreGive( sem_pressure_finished );
 				vTaskDelete(TaskHandle_set_matrix_index);
-				vTaskDelete(NULL);
+				//vTaskDelete(NULL);
+				vTaskDelete(TaskHandle_get_pressure_value);
 			}
 
 			// Se setean la fila y columna correspondientes y se lee el valor

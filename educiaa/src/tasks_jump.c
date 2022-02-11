@@ -43,7 +43,7 @@ void task_measure_jump( void* taskParmPtr )
 	uint32_t f = 0;
 	uint32_t last_f = OFFSET;
 	uint8_t force_counter = 0;
-	uint16_t zeroed_newton;
+	int16_t zeroed_newton;
 
 	// Se crea la tarea de medicion de fuerza para empezar a medir en modo simple
 	force_measurement_mode_t mode = SIMPLE_MODE;
@@ -88,7 +88,7 @@ void task_measure_jump( void* taskParmPtr )
 
 				// Se calcula el valor de fuerza en Newtons pero se pone el cero en el valor del peso del usuario
 				// en Newton
-				zeroed_newton = ((int16_t)f - (int16_t)WEIGHT) * GRAVITY / SCALE;
+				zeroed_newton = ((double)f - (double)WEIGHT) * GRAVITY / SCALE;
 
 				// Se envia el valor de la fuerza a la cola queue_jump para dsps calcular los parametros
 				xQueueSend( queue_jump_force , &zeroed_newton, portMAX_DELAY);
@@ -113,19 +113,22 @@ void task_calculate_jump_parameters( void* taskParmPtr )
 	uint8_t time_on_air = 0;
 	struct jump_parameters jp;
 	const double weight = ((double)(WEIGHT) - (double)(OFFSET)) / (double)SCALE;
-	uint16_t zeroed_newton;
+	int16_t zeroed_newton;
 
 	while ( TRUE )
 	{
 		// Se hace un peek para que los valores se reciban despues para imprimirse por wifi
-		if(xQueuePeek(queue_jump_force , &zeroed_newton,  portMAX_DELAY)){
+		if(xQueueReceive( queue_jump_force, &( zeroed_newton ), RATE_20)){
+
 			// Etapa 0: todavia no empezo el salto
 			if (accelerating_downards == false) {
 				// Si se nota un valor en Newton menor a -20 (es como decir menor a 0, pero
 				// se usa un umbral para estar seguros)
-				if(zeroed_newton <= DOWNWARD_ACCELERATION_THRESHOLD) {
+				if(zeroed_newton <= DOWNWARD_ACCELERATION_THRESHOLD || zeroed_newton >= -DOWNWARD_ACCELERATION_THRESHOLD) {
 					accelerating_downards = true;
 				}
+
+
 			}
 			// Etapa 1: acelerando hacia abajo
 			if (accelerating_downards == true && deaccelerating == false) {
@@ -151,7 +154,7 @@ void task_calculate_jump_parameters( void* taskParmPtr )
 				// Si se mide un valor positivo de fuerza, el usuario ya cayo y se
 				// pueden calcular los parametros
 				} else {
-					jp.t = time_on_air * FORCE_MEASUREMENT_PERIOD / 2;	// t es el tiempo hasta la altura maxima, por eso se lo divide por 2
+					jp.t = time_on_air * FORCE_MEASUREMENT_PERIOD_MS / 2;	// t es el tiempo hasta la altura maxima, por eso se lo divide por 2
 					jp.vel = jp.t * GRAVITY;
 					jp.height = (jp.vel * jp.vel)/ (2 * GRAVITY);
 					jp.power = jp.vel * weight * GRAVITY;
@@ -163,6 +166,9 @@ void task_calculate_jump_parameters( void* taskParmPtr )
 					vTaskDelete(NULL);
 				}
 			}
+		}else{
+			create_task(task_print_matrix,"task_print_matrix",BASE_SIZE,0,1,NULL);
+			vTaskDelete(NULL);
 		}
 		// Delay periodico
 		vTaskDelayUntil( &xLastWakeTime , xPeriodicity );

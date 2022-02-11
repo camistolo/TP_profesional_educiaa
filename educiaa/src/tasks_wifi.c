@@ -25,7 +25,7 @@ extern TaskHandle_t TaskHandle_measure_jump;
 // Tipo de medicion
 typedef enum{
 	WEIGHT_MEAS = 1,
-	JUMP_MEAS
+	JUMP_MEAS = 3
 } measurement_type_t;
 
 /*=========================[declaracion de funciones]=========================*/
@@ -129,6 +129,7 @@ void task_choose_measurement( void* pvParameters )
 					break;
 				case JUMP_MEAS:
 					// Se crea la tarea que mide el salto
+					stdioPrintf(UART_USB, "SALTE!\n");
 					create_task(task_measure_jump,"task_measure_jump",BASE_SIZE,0,1,&TaskHandle_measure_jump);
 					break;
 			}
@@ -141,6 +142,7 @@ void task_choose_measurement( void* pvParameters )
 void task_print_weight( void* pvParameters )
 {
 	double weight;
+	//char weight_str[20] = {};
 	char weight_str[20] = {};
 
 	while( TRUE )
@@ -164,9 +166,6 @@ void task_print_matrix( void* pvParameters )
 	uint16_t matrix_val;
 	uint8_t row=0, col=0;
 
-	// El numero 2 le indica al modulo wifi que es una medicion de salto
-	stdioPrintf(UART_USED, ">2{\"matrix\":[");
-
 	while( TRUE )
 	{
 		// Impresion de la matriz, a medida que se reciben los valores
@@ -174,50 +173,26 @@ void task_print_matrix( void* pvParameters )
 		{
 			if (col < (MAX_COL-1))
 			{
+				if (col == 0)
+				{
+					stdioPrintf(UART_USED, ">%c[", 65+row);
+				}
 				stdioPrintf(UART_USED, "%d,", matrix_val);
 				col++;
 			}else{
+				stdioPrintf(UART_USED, "%d]<\n", matrix_val);
 				col = 0;
 				row++;
-				if (row < MAX_ROW)
-				{
-					stdioPrintf(UART_USED, "%d;", matrix_val);
-				}else{
-					stdioPrintf(UART_USED, "%d", matrix_val);
-				}
 			}
 		}else{	// Fin de impresion de la matriz, se crea la tarea de impresion del vector
-			stdioPrintf(UART_USED, "],");
 
-			create_task(task_print_vector,"task_print_vector",BASE_SIZE,0,1,NULL);
+			create_task(task_print_parameters,"task_print_parameters",BASE_SIZE,0,1,NULL);
 
 		    vTaskDelete(NULL);
 		}
 	}
 }
 
-// Tarea que envia al modulo wifi el vector de valores de fuerza durante el salto
-void task_print_vector( void* pvParameters )
-{
-	uint16_t zeroed_newton_val;
-	uint8_t index = 0;
-
-	stdioPrintf(UART_USED, "\"vector\":[");
-
-	while( TRUE )
-	{
-		// Impresion del vector, a medida que se reciben los valores
-		if(xQueueReceive( queue_jump_force, &( zeroed_newton_val ), (TickType_t) 10)) // Dequeue matrix data
-		{
-			stdioPrintf(UART_USED, "%d,", zeroed_newton_val);
-			index ++;
-		}else{	// Fin de impresion del vector, se crea la tarea de impresion del vector
-			stdioPrintf(UART_USED, "],");
-			create_task(task_print_parameters,"task_print_parameters",BASE_SIZE,0,1,NULL);
-			vTaskDelete(NULL);
-		}
-	}
-}
 
 // Tarea que envia al modulo wifi los parametros del salto
 void task_print_parameters( void* pvParameters )
@@ -239,9 +214,15 @@ void task_print_parameters( void* pvParameters )
 			gcvt(jp.height, 10, height_str);
 			gcvt(jp.power, 10, power_str);
 
-			stdioPrintf(UART_USED, "\"speed\":%s,\"power\":%s,\"time\":%s,\"height\":%s}<\n", vel_str, power_str, t_str, height_str);
-
+			stdioPrintf(UART_USED, ">3{\"speed\":%s,\"power\":%s,\"time\":%s,\"height\":%s}<\n", vel_str, power_str, t_str, height_str);
+			stdioPrintf(UART_USB, ">3{\"speed\":%s,\"power\":%s,\"time\":%s,\"height\":%s}<\n", vel_str, power_str, t_str, height_str);
 			// Se crea la tarea que recibe el comando por wifi
+			create_task(task_receive_wifi,"task_receive_wifi",BASE_SIZE,0,1,NULL);
+			vTaskDelete(NULL);
+		}else{
+			// Si entra aca quiere decir que no se salto, ya que la cola
+			// queue_jump_parameters se encontraba vacia
+			stdioPrintf(UART_USED, ">3{\"speed\":0,\"power\":0,\"time\":0,\"height\":0}<\n");
 			create_task(task_receive_wifi,"task_receive_wifi",BASE_SIZE,0,1,NULL);
 			vTaskDelete(NULL);
 		}

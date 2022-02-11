@@ -29,14 +29,6 @@ typedef enum {
 	SIMPLE_MODE
 } force_measurement_mode_t;
 
-// Estructura de parametros del salto
-struct jump_parameters {
-	double vel;
-	double t;
-	double height;
-	double power;
-};
-
 // Pines del HX711
 #define DataPin 		ENET_TXEN
 #define ClockPin 		ENET_RXD1
@@ -48,17 +40,6 @@ struct jump_parameters {
 #define GAIN_32					26
 #define XOR_VALUE 				0x800000
 #define TOTAL_MEDIAN_VALUES		20
-
-// Cantidad de mediciones tomadas durante el salto
-#define JUMP_N			100
-
-// Constantes auxiliares
-#define GRAVITY						9.8
-#define FORCE_MEASUREMENT_PERIOD	0.02
-
-#define DOWNWARD_ACCELERATION_THRESHOLD -20
-#define DEACCELERATION_THRESHOLD		5
-#define ON_AIR_THRESHOLD				0
 
 /*=========================[definicion de funciones]=========================*/
 
