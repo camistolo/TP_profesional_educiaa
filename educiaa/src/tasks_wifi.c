@@ -215,7 +215,6 @@ void task_print_parameters( void* pvParameters )
 			gcvt(jp.power, 10, power_str);
 
 			stdioPrintf(UART_USED, ">3{\"speed\":%s,\"power\":%s,\"time\":%s,\"height\":%s}<\n", vel_str, power_str, t_str, height_str);
-			stdioPrintf(UART_USB, ">3{\"speed\":%s,\"power\":%s,\"time\":%s,\"height\":%s}<\n", vel_str, power_str, t_str, height_str);
 			// Se crea la tarea que recibe el comando por wifi
 			create_task(task_receive_wifi,"task_receive_wifi",BASE_SIZE,0,1,NULL);
 			vTaskDelete(NULL);
