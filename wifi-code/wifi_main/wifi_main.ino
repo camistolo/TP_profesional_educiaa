@@ -37,13 +37,13 @@ void setup()
         {
           strcpy(mqtt_server, json["mqtt_server"]);
         } else {
-          // Serial.println("failed to load json config");
+          Serial.println("failed to load json config");
         }
         configFile.close();
       }
     }
   } else {
-    // Serial.println("failed to mount FS");
+    Serial.println("failed to mount FS");
   }
   
   // Extra parameters.
@@ -79,7 +79,7 @@ void setup()
     File configFile = SPIFFS.open("/config.json", "w");
     if (!configFile) 
     {
-      // Serial.println("failed to open config file for writing");
+      Serial.println("failed to open config file for writing");
     }
     json.printTo(configFile);
     configFile.close();

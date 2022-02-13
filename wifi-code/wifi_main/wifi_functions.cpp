@@ -51,9 +51,7 @@ void serial_data()
     // New data to read.
   if(Serial.available()>0)
   {
-    //sensor_data_str = Serial.readString();
     sensor_data_str = Serial.readStringUntil('\n');
-    //sensor_data_str = Serial.readStringUntil('#');
     
     if(sensor_data_str.startsWith(">") && sensor_data_str.endsWith("<"))
     {
@@ -187,7 +185,6 @@ void reconnect()
     {
       Serial.flush();
       client.subscribe("lamp");
-      //client.subscribe("room/indicate_measurement");
       client.subscribe("indicate_measurement");
     } else {
       Serial.print(client.state());
