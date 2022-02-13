@@ -28,7 +28,7 @@
 #define UART_USED 		UART_232
 #define BAUD_RATE 		115200
 
-/*=========================[definicion de funciones]=========================*/
+/*=========================[declaracion de funciones]=========================*/
 
 void task_receive_wifi( void* pvParameters );
 void task_choose_measurement( void* pvParameters );

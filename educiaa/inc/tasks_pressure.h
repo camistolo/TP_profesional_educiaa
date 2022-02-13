@@ -37,7 +37,7 @@
 #define muxS3 T_COL0 //GPIO29
 #define muxSIG CH3
 
-/*=========================[definicion de funciones]=========================*/
+/*=========================[declaracion de funciones]=========================*/
 
 void task_set_matrix_index( void* pvParameters );
 void task_get_pressure_value( void* pvParameters );

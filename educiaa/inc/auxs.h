@@ -41,7 +41,7 @@
 #define RATE_5	 		pdMS_TO_TICKS(RATE_5_MS)
 #define RATE_1 			pdMS_TO_TICKS(RATE_1_MS)
 
-/*=========================[definicion de funciones]=========================*/
+/*=========================[declaracion de funciones]=========================*/
 
 void create_task(TaskFunction_t task, const char * const name, uint8_t stack,void * const params, uint8_t priority, TaskHandle_t * const ptr);
 void create_queue(QueueHandle_t *q_name,UBaseType_t q_length,UBaseType_t q_scale);

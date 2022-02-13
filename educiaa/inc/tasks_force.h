@@ -41,7 +41,7 @@ typedef enum {
 #define XOR_VALUE 				0x800000
 #define TOTAL_MEDIAN_VALUES		20
 
-/*=========================[definicion de funciones]=========================*/
+/*=========================[declaracion de funciones]=========================*/
 
 void task_measure_force( void* taskParmPtr );
 void task_check_hx711_is_ready( void* taskParmPtr );

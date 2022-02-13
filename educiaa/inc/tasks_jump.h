@@ -42,7 +42,7 @@ struct jump_parameters {
 #define DEACCELERATION_THRESHOLD		5
 #define ON_AIR_THRESHOLD				0
 
-/*=========================[definicion de funciones]=========================*/
+/*=========================[declaracion de funciones]=========================*/
 
 void task_measure_jump( void* taskParmPtr );
 void task_calculate_jump_parameters( void* taskParmPtr );

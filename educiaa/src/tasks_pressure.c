@@ -17,7 +17,7 @@ SemaphoreHandle_t sem_pressure_finished;
 TaskHandle_t TaskHandle_set_matrix_index;
 TaskHandle_t TaskHandle_get_pressure_value;
 
-/*=========================[declaracion de funciones]=========================*/
+/*=========================[definicion de funciones]=========================*/
 
 // Tarea que setea los indices de la celda de la matriz que tiene que ser medida
 // y se los envia (mediante la cola queue_measure_pressure) a la tarea
