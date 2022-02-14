@@ -154,8 +154,8 @@ void task_calculate_jump_parameters( void* taskParmPtr )
 				// Si se mide un valor positivo de fuerza, el usuario ya cayo y se
 				// pueden calcular los parametros
 				} else {
-					jp.t = time_on_air * FORCE_MEASUREMENT_PERIOD_MS / 2;	// t es el tiempo hasta la altura maxima, por eso se lo divide por 2
-					jp.vel = jp.t * GRAVITY;
+					jp.t = time_on_air * FORCE_MEASUREMENT_PERIOD_MS;
+					jp.vel = jp.t * GRAVITY / 2;
 					jp.height = (jp.vel * jp.vel)/ (2 * GRAVITY);
 					jp.power = jp.vel * weight * GRAVITY;
 
