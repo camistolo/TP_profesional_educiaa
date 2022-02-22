@@ -37,6 +37,7 @@ struct jump_parameters {
 // Constantes auxiliares
 #define GRAVITY						9.8
 #define FORCE_MEASUREMENT_PERIOD_MS	20
+#define TIME_TO_MS	1000
 
 #define DOWNWARD_ACCELERATION_THRESHOLD -20
 #define DEACCELERATION_THRESHOLD		5
