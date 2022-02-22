@@ -8,7 +8,7 @@
  *===========================================================================*/
 #include "tasks_wifi.h"
 
-/*=========================[declaracion de variables]========================*/
+/*=========================[declaracion y definicion de variables]========================*/
 
 QueueHandle_t queue_command_wifi;
 extern QueueHandle_t queue_jump_parameters;
@@ -28,7 +28,7 @@ typedef enum{
 	JUMP_MEAS = 3
 } measurement_type_t;
 
-/*=========================[declaracion de funciones]=========================*/
+/*=========================[definicion de funciones]=========================*/
 
 // Tarea que recibe una cadena por wifi del tipo >dato<, donde dato es el comando
 // que se le va a enviar, a traves de la cola queue_command_wifi, a la tarea
@@ -42,7 +42,6 @@ void task_receive_wifi( void* pvParameters )
 	uint8_t message_buffer;
 	uint8_t index;
 
-	// ---------- REPETIR POR SIEMPRE --------------------------
 	while( TRUE )
 	{
 		meas_char = uartRxRead( UART_USED );

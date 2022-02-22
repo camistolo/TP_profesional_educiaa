@@ -31,7 +31,7 @@ extern TaskHandle_t TaskHandle_set_matrix_index;
 extern TaskHandle_t TaskHandle_get_pressure_value;
 extern TaskHandle_t TaskHandle_measure_force;
 
-/*=========================[declaracion de funciones]=========================*/
+/*=========================[definicion de funciones]=========================*/
 
 // Tarea que calcula que organiza el calculo de la fuerza y de la presion durante
 // el salto

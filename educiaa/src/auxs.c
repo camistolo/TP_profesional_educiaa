@@ -8,7 +8,7 @@
  *===========================================================================*/
 #include "auxs.h"
 
-/*=========================[declaracion de funciones]=========================*/
+/*=========================[definicion de funciones]=========================*/
 
 // Funcion que crea y valida las tareas de FreeRTOS
 void create_task(TaskFunction_t task, const char * const name, uint8_t stack, void * const params, uint8_t priority, TaskHandle_t * const ptr)

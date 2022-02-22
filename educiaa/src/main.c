@@ -8,7 +8,7 @@
  *===========================================================================*/
 #include "main.h"
 
-/*==================[definiciones de datos externos]=========================*/
+/*==================[definicion de datos externos]=========================*/
 
 // Handles de las colas
 extern QueueHandle_t queue_force;

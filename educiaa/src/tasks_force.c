@@ -27,7 +27,7 @@ TaskHandle_t TaskHandle_calculate_median;
 TaskHandle_t TaskHandle_measure_weight;
 extern TaskHandle_t TaskHandle_print_weight;
 
-/*=========================[declaracion de funciones]=========================*/
+/*=========================[definicion de funciones]=========================*/
 
 // Tarea que libera un semaforo cuando el HX711 esta listo para medir
 void task_check_hx711_is_ready( void* taskParmPtr )
