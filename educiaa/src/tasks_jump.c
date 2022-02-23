@@ -45,6 +45,8 @@ void task_measure_jump( void* taskParmPtr )
 	uint8_t force_counter = 0;
 	int16_t zeroed_newton;
 
+	xQueueReset( queue_jump_force);
+
 	// Se crea la tarea de medicion de fuerza para empezar a medir en modo simple
 	force_measurement_mode_t mode = SIMPLE_MODE;
 	create_task(task_measure_force,"task_measure_force",BASE_SIZE,&mode,1,&TaskHandle_measure_force);
@@ -89,7 +91,7 @@ void task_measure_jump( void* taskParmPtr )
 				// Se calcula el valor de fuerza en Newtons pero se pone el cero en el valor del peso del usuario
 				// en Newton
 				zeroed_newton = ((double)f - (double)WEIGHT) * GRAVITY / SCALE;
-
+stdioPrintf(UART_USB, "%d\n", zeroed_newton);
 				// Se envia el valor de la fuerza a la cola queue_jump para dsps calcular los parametros
 				xQueueSend( queue_jump_force , &zeroed_newton, portMAX_DELAY);
 			}
