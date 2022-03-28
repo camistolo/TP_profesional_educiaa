@@ -121,6 +121,8 @@ void task_calculate_median( void* taskParmPtr )
 			// entre todos los valores medidos (esto permite evitar valores extremos que
 			// en el promedio se incluirian para el calculo)
 			if (counter == TOTAL_MEDIAN_VALUES){
+				// Primero se ordena el arreglo de menor a mayor y luego se toma el valor del medio.
+				qsort(f_values, TOTAL_MEDIAN_VALUES, sizeof(uint32_t), compare_int);
 				median = f_values[counter/2];
 				// Se envia el valor a traves de queue_force_average y se elimnan las tareas
 				// de medicion de fuerza

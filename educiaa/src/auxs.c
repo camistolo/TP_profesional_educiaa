@@ -58,4 +58,11 @@ void gpio_config(void)
    gpioInit(muxS3, GPIO_OUTPUT);
 }
 
+// Funcion que compara dos enteros
+int compare_int(const void* a, const void* b)
+{
+	return ( *(int*)a - *(int*)b );
+}
+
+
 /*=========================[fin del archivo]=================================*/

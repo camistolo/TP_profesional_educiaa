@@ -47,5 +47,6 @@ void create_task(TaskFunction_t task, const char * const name, uint8_t stack,voi
 void create_queue(QueueHandle_t *q_name,UBaseType_t q_length,UBaseType_t q_scale);
 void create_semaphore(SemaphoreHandle_t *sem_name);
 void gpio_config(void);
+int compare_int(const void* a, const void* b);
 
 #endif /* _AUXS_H_ */
