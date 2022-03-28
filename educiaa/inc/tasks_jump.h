@@ -6,8 +6,8 @@
  * Date: 2022/02/02
  * Version: v1.0
  *===========================================================================*/
-#ifndef TASKS_PRESSURE_H
-#define TASKS_PRESSURE_H
+#ifndef _TASKS_JUMP_H_
+#define _TASKS_JUMP_H_
 
 /*==================[inclusiones]============================================*/
 
@@ -17,31 +17,35 @@
 #include "sapi.h"
 #include "semphr.h"
 #include "task.h"
+#include "tasks_force.h"
+#include "tasks_pressure.h"
+#include "tasks_wifi.h"
 
 /*====================[definicion de variables y macros]=====================*/
 
-// Dimensiones de la matriz
-#define MAX_COL 14
-#define MAX_ROW 14
+// Estructura de parametros del salto
+struct jump_parameters {
+	double vel;
+	double t;
+	double height;
+	double power;
+};
 
-// Pines del sensor de presion
-#define demuxS0 GPIO1
-#define demuxS1 GPIO3
-#define demuxS2 GPIO5
-#define demuxS3 GPIO7
-#define demuxSIG GPIO8
+// Cantidad de mediciones tomadas durante el salto
+#define JUMP_N			100
 
-#define muxS0 T_FIL0 // GPIO25
-#define muxS1 T_FIL3 // GPIO28
-#define muxS2 T_FIL2 // GPIO27
-#define muxS3 T_COL0 //GPIO29
-#define muxSIG CH3
+// Constantes auxiliares
+#define GRAVITY						9.8
+#define FORCE_MEASUREMENT_PERIOD_MS	20
+#define TIME_TO_MS	1000
+
+#define DOWNWARD_ACCELERATION_THRESHOLD -20
+#define DEACCELERATION_THRESHOLD		5
+#define ON_AIR_THRESHOLD				0
 
 /*=========================[declaracion de funciones]=========================*/
 
-void task_set_matrix_index( void* pvParameters );
-void task_get_pressure_value( void* pvParameters );
-void SetMuxChannel(uint8_t channel);
-void SetDeMuxChannel(uint8_t channel);
+void task_measure_jump( void* taskParmPtr );
+void task_calculate_jump_parameters( void* taskParmPtr );
 
-#endif //TASKS_PRESSURE_H
+#endif /* _TASKS_JUMP_H_ */
